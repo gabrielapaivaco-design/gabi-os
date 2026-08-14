@@ -8,6 +8,7 @@ import { getWorkspaceId } from "@/lib/workspace/current";
 import { STATUS_COLOR, STATUS_LABEL, STATUS_ORDER } from "@/lib/utils/constants";
 import type { ContentStatus } from "@/types/db";
 import { GoalsWidget, type Goal } from "./goals-widget";
+import { isAiConfigured } from "@/lib/ai";
 
 function saudacao() {
   const h = new Date().getHours();
@@ -186,7 +187,7 @@ export default async function HojePage() {
 
       {!unavailable && (
         <div className="mb-5">
-          <GoalsWidget goals={goals} quarter={currentQuarter()} />
+          <GoalsWidget goals={goals} quarter={currentQuarter()} aiConfigured={isAiConfigured()} />
         </div>
       )}
 

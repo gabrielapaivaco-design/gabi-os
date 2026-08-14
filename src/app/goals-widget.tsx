@@ -7,6 +7,7 @@ import {
   deleteGoalAction,
   updateGoalAction,
 } from "./goals-actions";
+import { GoalsSuggest } from "./goals-suggest";
 
 export interface Goal {
   id: string;
@@ -20,7 +21,15 @@ export interface Goal {
 const inputClass =
   "rounded-control border border-line bg-canvas px-2 py-1 text-[13px] text-ink placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-rose";
 
-export function GoalsWidget({ goals: initialGoals, quarter }: { goals: Goal[]; quarter: string }) {
+export function GoalsWidget({
+  goals: initialGoals,
+  quarter,
+  aiConfigured = false,
+}: {
+  goals: Goal[];
+  quarter: string;
+  aiConfigured?: boolean;
+}) {
   const [goals, setGoals] = useState(initialGoals);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +141,8 @@ export function GoalsWidget({ goals: initialGoals, quarter }: { goals: Goal[]; q
           {error}
         </p>
       )}
+
+      <GoalsSuggest existingTitles={goals.map((g) => g.title)} aiConfigured={aiConfigured} />
     </section>
   );
 }

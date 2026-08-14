@@ -211,20 +211,35 @@ export function PlanPanel({
         </p>
       )}
 
-      {!plan.approved && (
-        <div className="flex items-center justify-between gap-4 rounded-card border border-line bg-surface p-5">
+      {/* Antes esta barra sumia quando o plano era aprovado, e nao havia como
+          refazer o mes — que e exatamente o que se quer quando o plano saiu com
+          dados incompletos. Aprovado, o que muda e o texto e a ausencia do
+          botao de aprovar de novo; conversar e regerar continuam disponiveis. */}
+      <div className="flex items-center justify-between gap-4 rounded-card border border-line bg-surface p-5">
           <p className="text-[12px] leading-relaxed text-muted">
-            {vencidos > 0 ? (
+            {plan.approved ? (
               <>
-                <span className="text-destructive">
-                  {vencidos} {vencidos === 1 ? "conteudo esta" : "conteudos estao"} com data que ja
-                  passou
+                Este plano ja virou {plan.items.length} cards no Pipeline.{" "}
+                <span className="text-ink">
+                  Gerar de novo cria uma proposta nova e nao mexe nesses cards
                 </span>{" "}
-                — gere de novo para o Diretor redistribuir no que resta do mes.{" "}
+                — os antigos continuam la, e voce apaga os que nao quiser no Pipeline.
               </>
-            ) : null}
-            Aprovar cria {plan.items.length} cards em &quot;Ideia&quot;, cada um com data e hora.
-            Gerar de novo descarta esta proposta.
+            ) : (
+              <>
+                {vencidos > 0 ? (
+                  <>
+                    <span className="text-destructive">
+                      {vencidos} {vencidos === 1 ? "conteudo esta" : "conteudos estao"} com data que
+                      ja passou
+                    </span>{" "}
+                    — gere de novo para o Diretor redistribuir no que resta do mes.{" "}
+                  </>
+                ) : null}
+                Aprovar cria {plan.items.length} cards em &quot;Ideia&quot;, cada um com data e
+                hora. Gerar de novo descarta esta proposta.
+              </>
+            )}
           </p>
           <div className="flex shrink-0 items-center gap-3">
             <button
@@ -241,16 +256,17 @@ export function PlanPanel({
             >
               {gerando ? "Gerando..." : "Gerar de novo"}
             </button>
-            <button
-              onClick={aprovar}
-              disabled={isPending}
-              className="rounded-control bg-ink px-3.5 py-2 text-[13px] font-medium text-white transition-transform duration-150 ease-premium active:scale-[0.98] disabled:opacity-50"
-            >
-              {isPending && !gerando ? "Criando..." : "Aprovar e criar"}
-            </button>
+            {!plan.approved && (
+              <button
+                onClick={aprovar}
+                disabled={isPending}
+                className="rounded-control bg-ink px-3.5 py-2 text-[13px] font-medium text-white transition-transform duration-150 ease-premium active:scale-[0.98] disabled:opacity-50"
+              >
+                {isPending && !gerando ? "Criando..." : "Aprovar e criar"}
+              </button>
+            )}
           </div>
         </div>
-      )}
 
       {conversando && (
         <DirectorChat
