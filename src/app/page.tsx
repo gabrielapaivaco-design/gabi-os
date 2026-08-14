@@ -37,6 +37,7 @@ interface HojeData {
   toPost: ActionItem[];
   goals: Goal[];
   unavailable: boolean;
+  erro?: string;
 }
 
 function currentQuarter(): string {
@@ -96,7 +97,14 @@ async function loadHoje(): Promise<HojeData> {
       goals: (goalsRes.data ?? []) as Goal[],
       unavailable: false,
     };
-  } catch {
+  } catch (err) {
+    // A mensagem real vai junto. A versao anterior engolia o erro e mostrava
+    // sempre "confira o .env.local", o que mandou investigar o lugar errado
+    // quando o problema era outro. Erro sem causa visivel custa mais caro que
+    // erro feio.
+    const causa = err instanceof Error ? err.message : String(err);
+    console.error("[hoje] falha ao carregar:", causa);
+
     return {
       totalMoments: 0,
       unconvertedMoments: 0,
@@ -106,6 +114,7 @@ async function loadHoje(): Promise<HojeData> {
       toPost: [],
       goals: [],
       unavailable: true,
+      erro: causa,
     };
   }
 }
@@ -134,7 +143,7 @@ function ActionQueue({ title, items }: { title: string; items: ActionItem[] }) {
 }
 
 export default async function HojePage() {
-  const { totalMoments, unconvertedMoments, statusCounts, toRecord, toEdit, toPost, goals, unavailable } =
+  const { totalMoments, unconvertedMoments, statusCounts, toRecord, toEdit, toPost, goals, unavailable, erro } =
     await loadHoje();
   const hoje = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long", day: "numeric", month: "long",
@@ -162,10 +171,16 @@ export default async function HojePage() {
       <section className="rounded-card border border-line bg-surface p-5 mb-5">
         <div className="text-[12px] text-faint mb-2">Briefing do diretor</div>
         {unavailable ? (
-          <p className="text-sm leading-relaxed text-ink">
-            Ainda nao consegui falar com o Supabase. Confira <code>.env.local</code> e se as
-            migrations foram executadas.
-          </p>
+          <>
+            <p className="text-sm leading-relaxed text-ink">
+              Nao consegui carregar os dados deste workspace.
+            </p>
+            {erro && (
+              <p className="mt-2 rounded-control border border-line bg-canvas px-3 py-2 font-mono text-[12px] leading-relaxed text-muted">
+                {erro}
+              </p>
+            )}
+          </>
         ) : hasData ? (
           <p className="text-sm leading-relaxed text-ink">
             Voce tem {totalMoments} {totalMoments === 1 ? "Momento registrado" : "Momentos registrados"}
