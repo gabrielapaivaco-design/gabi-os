@@ -55,3 +55,14 @@ Sem isso, a sessao pode nao persistir corretamente no dominio publicado.
 
 O banco continua sendo o mesmo Supabase do localhost. Nao ha copia nem
 migracao: o que voce criar publicado aparece no local e vice-versa.
+
+## Regiao do servidor
+
+`vercel.json` fixa as funcoes em `gru1` (Sao Paulo).
+
+Sem isso a Vercel executava em `iad1` (Washington), enquanto o Supabase deste
+projeto fica em Porto Alegre e quem usa o sistema esta no Brasil. Cada tela
+fazia quatro travessias do continente: navegador -> EUA -> banco no Brasil ->
+EUA -> navegador.
+
+Se um dia o banco mudar de regiao, esta linha muda junto.
