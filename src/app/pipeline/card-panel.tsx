@@ -7,6 +7,7 @@ import type { Objective } from "@/types/db";
 import type { DirectorTask } from "@/lib/ai/director";
 import { archiveContentAction, updateContentAction } from "./actions";
 import { chatWithDirectorAction, runDirectorAction } from "./ai-actions";
+import { markPublishedAction } from "./publish-actions";
 import { scheduleContentAction } from "@/app/calendario/actions";
 import type { ContentCardData, PillarOption } from "./pipeline-board";
 import { DirectorStudio, TASK_LABEL, type DirectorResult } from "./director-studio";
@@ -31,6 +32,18 @@ const OBJECTIVES: { value: Objective; label: string }[] = [
 
 const inputClass =
   "w-full rounded-control border border-line bg-canvas px-2.5 py-1.5 text-[13px] text-ink placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-rose";
+
+// Adivinha a plataforma pelo dominio. Palpite so para poupar um campo — a
+// conciliacao depois grava a plataforma real vinda do post.
+function plataformaDaUrl(url: string): string | null {
+  const u = url.toLowerCase();
+  if (u.includes("instagram.com")) return "instagram";
+  if (u.includes("tiktok.com")) return "tiktok";
+  if (u.includes("youtube.com") || u.includes("youtu.be")) return "youtube";
+  if (u.includes("facebook.com")) return "facebook";
+  if (u.includes("linkedin.com")) return "linkedin";
+  return null;
+}
 
 // Mesma moldura, tipografia de leitura: usado nos campos que recebem o texto
 // gerado (hook, roteiro, legenda, CTA).
@@ -84,6 +97,28 @@ export function CardPanel({
   // mas quem decide o que vai para o banco continua sendo a usuaria.
   const [aiDraft, setAiDraft] = useState(false);
   const [conversando, setConversando] = useState(false);
+  const [publicando, setPublicando] = useState(false);
+  const [urlPublicacao, setUrlPublicacao] = useState("");
+
+  function handlePublish() {
+    setError(null);
+    startTransition(async () => {
+      const url = urlPublicacao.trim();
+      const result = await markPublishedAction(card.id, {
+        // Plataforma inferida da URL: instagram.com -> instagram. Sem URL fica
+        // nulo, e a conciliacao preenche depois com o dado real do post.
+        platform: url ? plataformaDaUrl(url) : null,
+        url: url || null,
+      });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setPublicando(false);
+      onSaved({ status: "publicado", publishedAt: new Date().toISOString(), externalUrl: url || null });
+      onClose();
+    });
+  }
 
   function runTask(task: DirectorTask) {
     setStudioTask(task);
@@ -370,6 +405,79 @@ export function CardPanel({
               className={proseInputClass}
             />
           </Field>
+
+          {/* Publicacao. Fica no fim porque e o ultimo passo do card, e e o elo
+              que permite ligar metrica depois. Os campos de identidade externa
+              sao opcionais: publicar e conciliar sao momentos diferentes. */}
+          <div className="rounded-card border border-line bg-canvas p-3">
+            <span className="mb-2 block text-[11px] uppercase tracking-wide text-faint">
+              Publicacao
+            </span>
+
+            {card.publishedAt ? (
+              <>
+                <p className="text-[13px] text-ink">
+                  Publicado em{" "}
+                  {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(
+                    new Date(card.publishedAt),
+                  )}
+                  {card.platform ? ` · ${card.platform}` : ""}
+                </p>
+                {card.externalUrl && (
+                  <a
+                    href={card.externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-[12px] text-rose-ink underline-offset-2 hover:underline"
+                  >
+                    ver publicacao
+                  </a>
+                )}
+                {!card.externalId && (
+                  <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
+                    Sem post vinculado ainda — ligue em Conciliacao para as metricas chegarem
+                    neste card.
+                  </p>
+                )}
+              </>
+            ) : publicando ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-[12px] leading-relaxed text-muted">
+                  A URL e opcional. Sem ela, voce concilia depois pela tela de Conciliacao.
+                </p>
+                <input
+                  value={urlPublicacao}
+                  onChange={(e) => setUrlPublicacao(e.target.value)}
+                  placeholder="https://instagram.com/p/..."
+                  className={inputClass}
+                />
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handlePublish}
+                    disabled={isPending}
+                    className="rounded-control bg-ink px-3 py-1.5 text-[12px] font-medium text-white transition-transform duration-150 ease-premium active:scale-[0.98] disabled:opacity-40"
+                  >
+                    {isPending ? "Marcando..." : "Confirmar"}
+                  </button>
+                  <button
+                    onClick={() => setPublicando(false)}
+                    disabled={isPending}
+                    className="text-[12px] text-faint transition-colors hover:text-ink disabled:opacity-40"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setPublicando(true)}
+                disabled={isPending}
+                className="text-[13px] font-medium text-rose-ink transition-opacity hover:opacity-70 disabled:opacity-40"
+              >
+                Marcar como publicado
+              </button>
+            )}
+          </div>
 
           {card.momentExcerpt && (
             <div className="rounded-card border border-line bg-canvas p-3 text-[12px] text-muted">

@@ -66,3 +66,11 @@ fazia quatro travessias do continente: navegador -> EUA -> banco no Brasil ->
 EUA -> navegador.
 
 Se um dia o banco mudar de regiao, esta linha muda junto.
+
+## Migrations pendentes
+
+Rodar em ordem no SQL Editor do Supabase. Cada uma so uma vez.
+
+- `0007_publicacao_metricas.sql` — identidade externa do conteudo, tabela
+  `external_posts` e campos novos em `metrics`. Sem ela a tela de Conciliacao
+  nao abre.

@@ -28,7 +28,7 @@ async function loadBoard(): Promise<BoardData> {
       db
         .from("contents")
         .select(
-          "id, title, status, format, objective, pillar_id, hook, script, caption, cta, planned_at, moment_id, moment:moments(body)",
+          "id, title, status, format, objective, pillar_id, hook, script, caption, cta, planned_at, moment_id, published_at, platform, external_id, external_url, moment:moments(body)",
         )
         .eq("workspace_id", workspaceId)
         .eq("archived", false)
@@ -59,6 +59,10 @@ async function loadBoard(): Promise<BoardData> {
         momentId: row.moment_id,
         momentExcerpt: row.moment?.body ?? null,
         plannedDayKey: row.planned_at ? dayKeyFromIso(row.planned_at) : null,
+        publishedAt: row.published_at ?? null,
+        platform: row.platform ?? null,
+        externalId: row.external_id ?? null,
+        externalUrl: row.external_url ?? null,
       });
     }
     return { columns, pillars: (pillarsRes.data ?? []) as PillarOption[], unavailable: false };

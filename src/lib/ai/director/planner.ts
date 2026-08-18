@@ -257,6 +257,28 @@ export function renderPlanningContext(ctx: PlanningContext): string {
       .join("\n"),
   );
 
+  // Resultado por conteudo. E a secao mais valiosa do contexto quando existe:
+  // liga formato, pilar e hook a numero real, em vez de deixar o modelo supor.
+  add(
+    "Resultado dos conteudos publicados (formato -> pilar -> hook -> numero)",
+    ctx.published
+      .map((p) => {
+        const numeros = [
+          p.reach != null ? `alcance ${p.reach}` : null,
+          p.views != null ? `views ${p.views}` : null,
+          p.likes != null ? `curtidas ${p.likes}` : null,
+          p.comments != null ? `comentarios ${p.comments}` : null,
+          p.shares != null ? `compartilhamentos ${p.shares}` : null,
+          p.saves != null ? `salvos ${p.saves}` : null,
+        ].filter(Boolean);
+        const meta = [p.format, p.pillarName, p.objective].filter(Boolean).join(" · ");
+        const quando = p.publishedAt ? p.publishedAt.slice(0, 10) : "sem data";
+        const hook = p.hook ? `\n  hook: ${p.hook}` : "";
+        return `- ${quando} — ${p.title}${meta ? ` (${meta})` : ""}\n  ${numeros.join(", ") || "sem numeros"}${hook}`;
+      })
+      .join("\n"),
+  );
+
   const naoUsados = ctx.recentMoments.filter((m) => !m.converted);
   add(
     "Momentos ainda nao aproveitados (use o indice em momentIndex)",

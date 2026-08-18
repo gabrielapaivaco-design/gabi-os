@@ -50,6 +50,23 @@ export interface PlanningContext {
   // Melhores horarios por dia da semana, importados do Metricool. Ficam em
   // workspaces.settings porque sao propriedade da marca, nao de um mes.
   bestTimes: Record<string, number[]> | null;
+  // Resultado real por conteudo publicado: o que o Diretor precisa para ligar
+  // formato/pilar/hook a numero. Vazio ate existir conciliacao.
+  published: {
+    title: string;
+    format: string | null;
+    objective: string | null;
+    pillarName: string | null;
+    hook: string | null;
+    platform: string | null;
+    publishedAt: string | null;
+    reach: number | null;
+    views: number | null;
+    likes: number | null;
+    comments: number | null;
+    shares: number | null;
+    saves: number | null;
+  }[];
   // Sinaliza o que nao pode ser carregado (ex.: migration 0003 ainda nao
   // rodada). O Diretor precisa saber o que esta faltando em vez de assumir
   // que a ausencia de dados significa "nao ha nada".
@@ -88,6 +105,7 @@ export async function buildPlanningContext(
     dnaRes,
     datesRes,
     settingsRes,
+    publishedRes,
   ] = await Promise.all([
     db.from("brains").select("kind, content").eq("workspace_id", workspaceId),
     db.from("pillars").select("id, name, color").eq("workspace_id", workspaceId).order("sort"),
@@ -134,6 +152,17 @@ export async function buildPlanningContext(
       .select("id, name, month, day, lead_days")
       .or(`workspace_id.is.null,workspace_id.eq.${workspaceId}`),
     db.from("workspaces").select("settings").eq("id", workspaceId).maybeSingle(),
+    // Conteudos publicados com metrica ligada. O join sai de metrics porque a
+    // metrica e o fato novo; o conteudo e o contexto dela.
+    db
+      .from("metrics")
+      .select(
+        "reach, views, likes, comments, shares, saves, platform, collected_at, contents!inner(title, format, objective, hook, published_at, pillars(name))",
+      )
+      .eq("workspace_id", workspaceId)
+      .not("content_id", "is", null)
+      .order("collected_at", { ascending: false })
+      .limit(HISTORY_LIMIT),
   ]);
 
   const brains = { brand: {}, business: {}, learned: {} } as PlanningContext["brains"];
@@ -174,8 +203,47 @@ export async function buildPlanningContext(
     bestTimes:
       ((settingsRes.data?.settings as { best_times?: Record<string, number[]> } | null)
         ?.best_times) ?? null,
+    published: normalizarPublicados(publishedRes.data),
     missing,
   };
+}
+
+// Uma midia pode ter varias coletas; a mais recente e a que vale. Como a
+// consulta ja vem ordenada por data desc, o primeiro de cada titulo ganha.
+function normalizarPublicados(data: unknown): PlanningContext["published"] {
+  const vistos = new Set<string>();
+  const saida: PlanningContext["published"] = [];
+
+  for (const row of (data ?? []) as Record<string, unknown>[]) {
+    const c = row.contents as Record<string, unknown> | Record<string, unknown>[] | null;
+    const conteudo = Array.isArray(c) ? c[0] : c;
+    if (!conteudo) continue;
+
+    const titulo = String(conteudo.title ?? "");
+    if (vistos.has(titulo)) continue;
+    vistos.add(titulo);
+
+    const p = conteudo.pillars as { name?: string } | { name?: string }[] | null;
+    const pilar = Array.isArray(p) ? p[0] : p;
+
+    saida.push({
+      title: titulo,
+      format: (conteudo.format as string | null) ?? null,
+      objective: (conteudo.objective as string | null) ?? null,
+      pillarName: pilar?.name ?? null,
+      hook: (conteudo.hook as string | null) ?? null,
+      platform: (row.platform as string | null) ?? null,
+      publishedAt: (conteudo.published_at as string | null) ?? null,
+      reach: (row.reach as number | null) ?? null,
+      views: (row.views as number | null) ?? null,
+      likes: (row.likes as number | null) ?? null,
+      comments: (row.comments as number | null) ?? null,
+      shares: (row.shares as number | null) ?? null,
+      saves: (row.saves as number | null) ?? null,
+    });
+  }
+
+  return saida;
 }
 
 // Resumo legivel do cenario — usado hoje para mostrar a usuaria exatamente com
@@ -205,6 +273,14 @@ export function summarizeContext(ctx: PlanningContext): {
       label: "Melhores horarios",
       value: ctx.bestTimes ? `${Object.keys(ctx.bestTimes).length} dias mapeados` : "nao importados",
       ready: !!ctx.bestTimes,
+    },
+    {
+      label: "Resultado por conteudo",
+      value:
+        ctx.published.length > 0
+          ? `${ctx.published.length} publicados com metrica`
+          : "nenhum conteudo conciliado",
+      ready: ctx.published.length > 0,
     },
     { label: "Historico de conteudos", value: `${ctx.contentHistory.length}`, ready: ctx.contentHistory.length > 0 },
     { label: "Pilares", value: `${ctx.pillars.length}`, ready: ctx.pillars.length > 0 },

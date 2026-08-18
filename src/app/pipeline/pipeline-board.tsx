@@ -34,6 +34,13 @@ export interface ContentCardData {
   momentId: string | null;
   momentExcerpt: string | null;
   plannedDayKey: string | null;
+  // Identidade externa: onde o conteudo saiu de fato. Nulos ate ser publicado
+  // e conciliado.
+  status?: string;
+  publishedAt?: string | null;
+  platform?: string | null;
+  externalId?: string | null;
+  externalUrl?: string | null;
 }
 
 export interface PillarOption {

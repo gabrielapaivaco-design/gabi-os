@@ -16,6 +16,7 @@ function ctx(over: Partial<PlanningContext> = {}): PlanningContext {
     contentDna: [],
     commemorativeDates: [],
     bestTimes: null,
+    published: [],
     missing: [],
     ...over,
   };

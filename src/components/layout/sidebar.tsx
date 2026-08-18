@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Brain, History, LogOut, Settings } from "lucide-react";
+import { Brain, History, Link2, LogOut, Settings } from "lucide-react";
 import { NAV_ITEMS } from "./nav-items";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { signOutAction } from "@/app/login/actions";
@@ -54,6 +54,12 @@ export function Sidebar({
           className="flex items-center gap-2.5 rounded-control px-3 py-2 text-[12px] text-faint transition-colors hover:text-ink"
         >
           <Brain size={14} strokeWidth={1.8} /> Cerebros
+        </Link>
+        <Link
+          href="/conciliacao"
+          className="flex items-center gap-2.5 rounded-control px-3 py-2 text-[12px] text-faint transition-colors hover:text-ink"
+        >
+          <Link2 size={14} strokeWidth={1.8} /> Conciliacao
         </Link>
         <Link
           href="/historico"
