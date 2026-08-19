@@ -35,7 +35,14 @@ export async function generatePlanAction(
       db,
       period,
       conversa,
-      anterior ? { diagnosis: anterior.diagnosis, focus: anterior.focus, items: anterior.items } : undefined,
+      anterior
+        ? {
+            diagnosis: anterior.diagnosis,
+            focus: anterior.focus,
+            items: anterior.items,
+            storiesRoutine: anterior.storiesRoutine,
+          }
+        : undefined,
     );
     await saveMonthlyPlan(db, period, plan, momentIds);
   } catch (err) {

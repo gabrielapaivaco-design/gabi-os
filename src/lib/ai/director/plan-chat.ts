@@ -43,12 +43,18 @@ export async function chatAboutPlan(
     )
     .join("\n\n");
 
+  const rotina = plan.storiesRoutine.length
+    ? `\n\n## Rotina de Stories (diaria, nao vira card)\n${plan.storiesRoutine
+        .map((d) => `- ${d.weekday}: ${d.theme}`)
+        .join("\n")}`
+    : "";
+
   const cabecalho = [
     renderPlanningContext(context),
     "---",
     "# Cronograma que voce propos",
     `Diagnostico: ${plan.diagnosis}`,
-    `Foco: ${plan.focus}`,
+    `Foco: ${plan.focus}${rotina}`,
     "",
     cronograma,
   ].join("\n\n");

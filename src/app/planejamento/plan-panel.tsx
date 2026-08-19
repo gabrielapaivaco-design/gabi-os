@@ -134,6 +134,31 @@ export function PlanPanel({
         )}
       </section>
 
+      {plan.storiesRoutine.length > 0 && (
+        <section className="rounded-card border border-line bg-surface p-5">
+          <h2 className="text-[12px] font-medium uppercase tracking-wide text-faint">
+            Stories — todo dia
+          </h2>
+          <p className="mb-4 mt-0.5 text-[12px] leading-relaxed text-muted">
+            Ritual diario. Nao vira card no Pipeline: e feito no dia, reagindo ao que aconteceu.
+          </p>
+
+          <ul className="flex flex-col gap-2.5">
+            {plan.storiesRoutine.map((d) => (
+              <li key={d.weekday} className="flex gap-3 border-b border-line pb-2.5 last:border-0 last:pb-0">
+                <span className="w-16 shrink-0 text-[12px] capitalize text-faint">{d.weekday}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] leading-snug text-ink">{d.theme}</p>
+                  {d.why && (
+                    <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{d.why}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="rounded-card border border-line bg-surface p-5">
         <div className="mb-4 flex items-baseline justify-between gap-4">
           <h2 className="text-[12px] font-medium uppercase tracking-wide text-faint">

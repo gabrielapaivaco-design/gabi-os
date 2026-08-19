@@ -25,18 +25,39 @@ export interface PlannedItem {
   momentIndex: number;
 }
 
+// Stories sao ritual diario, nao peca planejada uma a uma. Vira card seria 30
+// cards de baixo valor afogando os conteudos de verdade no Pipeline — e Stories
+// costumam ser feitos no dia, reagindo ao que aconteceu. Por isso viram uma
+// rotina por dia da semana, fora da lista de conteudos.
+export interface StoriesDay {
+  weekday: string;
+  theme: string;
+  why: string;
+}
+
 export interface MonthlyPlan {
   diagnosis: string;
   focus: string;
   items: PlannedItem[];
+  storiesRoutine: StoriesDay[];
 }
+
+export const WEEKDAYS = [
+  "segunda",
+  "terca",
+  "quarta",
+  "quinta",
+  "sexta",
+  "sabado",
+  "domingo",
+] as const;
 
 // Tipado como Record e nao com `as const`: o literal aninhado faz o TypeScript
 // inferir um tipo enorme e estourar a memoria do compilador.
 const PLAN_SCHEMA: Record<string, unknown> = {
   type: "object",
   additionalProperties: false,
-  required: ["diagnosis", "focus", "items"],
+  required: ["diagnosis", "focus", "items", "storiesRoutine"],
   properties: {
     diagnosis: {
       type: "string",
@@ -46,6 +67,27 @@ const PLAN_SCHEMA: Record<string, unknown> = {
     focus: {
       type: "string",
       description: "Uma frase: a aposta central do mes e por que ela decorre do diagnostico.",
+    },
+    storiesRoutine: {
+      type: "array",
+      description:
+        "Os sete dias da semana, um objeto para cada. E o ritual diario de Stories, que nao vira card.",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["weekday", "theme", "why"],
+        properties: {
+          weekday: {
+            type: "string",
+            enum: ["segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo"],
+          },
+          theme: {
+            type: "string",
+            description: "O que gravar nesse dia, em uma frase concreta e executavel.",
+          },
+          why: { type: "string", description: "Uma frase: por que esse tema nesse dia." },
+        },
+      },
     },
     items: {
       type: "array",
@@ -144,6 +186,10 @@ function renderRevision(
         .join("\n")
     : "";
 
+  const rotina = plano?.storiesRoutine?.length
+    ? `\n\nE esta rotina de Stories:\n${plano.storiesRoutine.map((d) => `- ${d.weekday}: ${d.theme}`).join("\n")}`
+    : "";
+
   const dialogo = conversa
     .map((t) => `${t.role === "user" ? "ELA" : "VOCE"}: ${t.content}`)
     .join("\n\n");
@@ -152,7 +198,7 @@ function renderRevision(
 
 Voce ja tinha proposto este cronograma:
 
-${atual || "(nenhum)"}
+${atual || "(nenhum)"}${rotina}
 
 Depois voces conversaram sobre ele:
 
@@ -194,9 +240,15 @@ Comece por um diagnostico honesto do cenario acima — leia as metricas reais, n
 
 Depois defina o foco do mes: uma aposta central que decorra do diagnostico.
 
+Entao monte a ROTINA DE STORIES. Ela tem exatamente sete entradas, uma para cada dia da semana, de segunda a domingo. Stories saem TODO DIA, sem excecao — e por isso nao viram card: sao ritual, feitos no dia, reagindo ao que aconteceu.
+- Cada dia recebe um tema concreto e executavel em poucos minutos, nao um conceito abstrato. "Bastidor do que esta em producao hoje" serve; "conteudo de valor" nao.
+- Varie a funcao ao longo da semana: bastidor, resposta a duvida, prova social, rotina pessoal, chamada para o conteudo grande daquela semana.
+- Sabado e domingo pedem menos esforco que dia util. Respeite isso: rotina que nao se cumpre no fim de semana quebra a sequencia inteira.
+
 Entao proponha os conteudos. Regras:
 - Volume realista para o tempo que resta, nao para um mes cheio. Prefira poucos conteudos que saem a muitos que ficam no papel.
-- **Varie o formato.** Um mes precisa de pelo menos tres formatos diferentes, e nenhum deles pode passar de dois tercos do total. Mesmo quando um formato tem o melhor alcance, um mes inteiro dele e um mes pobre: Reel puxa alcance novo, Carrossel entrega profundidade e rende salvamento, Stories sustentam presenca diaria e conversa no direct, Foto unica ancora identidade. Alcance nao e a unica funcao do conteudo.
+- **Varie o formato.** Alterne entre Reel, Carrossel e Foto unica, e nenhum deles pode passar de dois tercos do total. Mesmo quando um formato tem o melhor alcance, um mes inteiro dele e um mes pobre: Reel puxa alcance novo, Carrossel entrega profundidade e rende salvamento, Foto unica ancora identidade. Alcance nao e a unica funcao do conteudo.
+- **Stories ficam na rotina, nao nesta lista.** So use formato "Stories" aqui quando for um Stories especifico e datado — cobertura de um lancamento, caixinha depois de um Reel que rendeu, bastidor de uma entrega marcada. O dia a dia ja esta coberto pela rotina.
 - No campo why, so cite dia da semana se ele corresponder a data que voce escolheu. Conferir isso e sua responsabilidade.
 - Aproveite primeiro os Momentos que ainda nao viraram conteudo — eles ja aconteceram na vida dela e por isso rendem material especifico. Use o indice da lista em momentIndex.
 - Use os melhores horarios informados para escolher a hora. Se nao houver dado para o dia, escolha o horario mais proximo entre os que existem.
@@ -335,9 +387,23 @@ function parsePlan(parsed: unknown): MonthlyPlan {
     throw new AiProviderError("A IA nao devolveu a lista de conteudos do mes.");
   }
 
+  // Ordena pela semana e nao pela ordem que o modelo devolveu, para a rotina
+  // sempre ler de segunda a domingo.
+  const rotina = Array.isArray(v.storiesRoutine)
+    ? (v.storiesRoutine as Record<string, unknown>[])
+        .map((d) => ({
+          weekday: String(d.weekday ?? ""),
+          theme: String(d.theme ?? ""),
+          why: String(d.why ?? ""),
+        }))
+        .filter((d) => d.theme)
+        .sort((a, b) => WEEKDAYS.indexOf(a.weekday as never) - WEEKDAYS.indexOf(b.weekday as never))
+    : [];
+
   return {
     diagnosis: String(v.diagnosis ?? ""),
     focus: String(v.focus ?? ""),
+    storiesRoutine: rotina,
     items: (v.items as Record<string, unknown>[]).map((i) => ({
       day: Number(i.day ?? 1),
       hour: Number(i.hour ?? 12),

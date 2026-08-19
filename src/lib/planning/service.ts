@@ -19,6 +19,8 @@ export interface StoredPlan {
   diagnosis: string;
   focus: string;
   items: StoredItem[];
+  // Ritual diario de Stories, por dia da semana. Nao vira card por design.
+  storiesRoutine: { weekday: string; theme: string; why: string }[];
   approved: boolean;
   generatedAt: string;
 }
@@ -40,7 +42,12 @@ export async function saveMonthlyPlan(
       year: period.year,
       // O banco guarda o mes de 1 a 12; o codigo usa o mes do JS, de 0 a 11.
       month: period.month + 1,
-      plan: { diagnosis: plan.diagnosis, focus: plan.focus, items },
+      plan: {
+        diagnosis: plan.diagnosis,
+        focus: plan.focus,
+        storiesRoutine: plan.storiesRoutine,
+        items,
+      },
       approved: false,
       generated_at: new Date().toISOString(),
     },
@@ -69,6 +76,11 @@ export async function loadMonthlyPlan(
     diagnosis: String(p.diagnosis ?? ""),
     focus: String(p.focus ?? ""),
     items: Array.isArray(p.items) ? (p.items as StoredItem[]) : [],
+    // Planos gerados antes desta versao nao tem rotina; lista vazia e a leitura
+    // correta, e a tela apenas nao mostra a secao.
+    storiesRoutine: Array.isArray(p.storiesRoutine)
+      ? (p.storiesRoutine as StoredPlan["storiesRoutine"])
+      : [],
     approved: !!data.approved,
     generatedAt: String(data.generated_at ?? ""),
   };
