@@ -20,25 +20,42 @@ interface BoardData {
   unavailable: boolean;
 }
 
+// Campos base: existem desde a migration 0001, sempre funcionam.
+const CAMPOS_BASE =
+  "id, title, status, format, objective, pillar_id, hook, script, caption, cta, planned_at, moment_id, moment:moments(body)";
+// Identidade externa chegou na 0007. Num banco onde ela ainda nao rodou, pedir
+// estas colunas faz a consulta inteira falhar — e o Kanban some por causa de
+// um campo opcional. Mesmo cuidado que `lib/workspace/service.ts` ja tinha.
+const CAMPOS_PUBLICACAO = "published_at, platform, external_id, external_url";
+
 async function loadBoard(): Promise<BoardData> {
   try {
     const db = createClient();
     const workspaceId = getWorkspaceId();
-    const [contentsRes, pillarsRes] = await Promise.all([
+
+    const buscarConteudos = (campos: string) =>
       db
         .from("contents")
-        .select(
-          "id, title, status, format, objective, pillar_id, hook, script, caption, cta, planned_at, moment_id, published_at, platform, external_id, external_url, moment:moments(body)",
-        )
+        .select(campos)
         .eq("workspace_id", workspaceId)
         .eq("archived", false)
-        .order("sort", { ascending: true }),
+        .order("sort", { ascending: true });
+
+    const [contentsCompleto, pillarsRes] = await Promise.all([
+      buscarConteudos(`${CAMPOS_BASE}, ${CAMPOS_PUBLICACAO}`),
       db
         .from("pillars")
         .select("id, name, color")
         .eq("workspace_id", workspaceId)
         .order("sort", { ascending: true }),
     ]);
+
+    // Cai para o conjunto base quando a 0007 ainda nao rodou. O Pipeline
+    // continua inteiro; o que falta e so o bloco de publicacao no painel.
+    const contentsRes =
+      contentsCompleto.error && /column .* does not exist/i.test(contentsCompleto.error.message)
+        ? await buscarConteudos(CAMPOS_BASE)
+        : contentsCompleto;
 
     if (contentsRes.error) throw contentsRes.error;
     if (pillarsRes.error) throw pillarsRes.error;
