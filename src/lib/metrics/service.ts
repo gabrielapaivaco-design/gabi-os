@@ -91,9 +91,25 @@ export async function importExternalPosts(
     }));
 
   if (linhas.length > 0) {
-    const { error: errMetric } = await db
+    // Idempotencia por dia, feita aqui e nao por indice unico: a expressao
+    // `collected_at::date` nao e aceita em indice (depende do fuso da sessao).
+    // Apagar as coletas de hoje destas midias antes de gravar faz reimportar
+    // corrigir em vez de duplicar, e preserva o historico dos dias anteriores.
+    const inicioDoDia = new Date();
+    inicioDoDia.setHours(0, 0, 0, 0);
+
+    const { error: errLimpeza } = await db
       .from("metrics")
-      .upsert(linhas, { onConflict: "workspace_id,platform,external_media_id,collected_at" });
+      .delete()
+      .eq("workspace_id", workspaceId)
+      .in(
+        "external_media_id",
+        posts.map((p) => p.externalId),
+      )
+      .gte("collected_at", inicioDoDia.toISOString());
+    if (errLimpeza) throw new Error(errLimpeza.message);
+
+    const { error: errMetric } = await db.from("metrics").insert(linhas);
     if (errMetric) throw new Error(errMetric.message);
   }
 

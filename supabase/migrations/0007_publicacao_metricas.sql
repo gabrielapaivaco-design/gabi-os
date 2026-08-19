@@ -84,11 +84,17 @@ alter table metrics add column if not exists views int;
 alter table metrics add column if not exists likes int;
 alter table metrics add column if not exists source text not null default 'manual';
 
--- Reimportar o mesmo periodo corrige em vez de duplicar. Parcial: so vale para
--- linhas com identidade externa, entao o resumo de conta (platform nulo) nao e
--- afetado.
-create unique index if not exists metrics_external_daily_key
-  on metrics (workspace_id, platform, external_media_id, (collected_at::date))
+-- Busca por midia externa. NAO e unico de proposito: varias coletas ao longo do
+-- tempo para o mesmo post sao desejaveis — e assim que se ve o alcance crescer.
+--
+-- A primeira versao tentava um indice unico por dia usando `(collected_at::date)`.
+-- Postgres recusa: converter timestamptz para date depende do fuso da sessao,
+-- entao a expressao nao e IMMUTABLE e nao pode entrar em indice. A protecao
+-- contra reimportar o mesmo dia duas vezes ficou no codigo (importExternalPosts
+-- apaga as coletas do dia antes de gravar), onde da para escrever a regra sem
+-- depender do fuso do servidor.
+create index if not exists metrics_external_idx
+  on metrics (workspace_id, platform, external_media_id, collected_at desc)
   where platform is not null and external_media_id is not null;
 
 create index if not exists metrics_content_idx
