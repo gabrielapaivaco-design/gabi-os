@@ -74,9 +74,43 @@ export async function loadMonthlyPlan(
   };
 }
 
+// Cards deste mes que nunca sairam do papel: continuam em "Ideia", sem roteiro,
+// legenda nem hook escritos. Sao o resto de um plano anterior que foi
+// substituido — mante-los ao lado dos novos cria um Pipeline com duas versoes
+// do mesmo mes.
+//
+// A regra e conservadora de proposito: qualquer sinal de trabalho (mudou de
+// coluna, ganhou texto, virou publicacao) tira o card desta lista.
+export async function listUntouchedFromMonth(
+  db: SupabaseClient,
+  period: { year: number; month: number },
+): Promise<{ id: string; title: string }[]> {
+  const inicio = new Date(period.year, period.month, 1).toISOString();
+  const fim = new Date(period.year, period.month + 1, 1).toISOString();
+
+  const { data, error } = await db
+    .from("contents")
+    .select("id, title, script, caption, hook, cta")
+    .eq("workspace_id", getWorkspaceId())
+    .eq("archived", false)
+    .eq("status", "ideia")
+    .gte("planned_at", inicio)
+    .lt("planned_at", fim);
+
+  if (error) return [];
+
+  return ((data ?? []) as Record<string, unknown>[])
+    .filter((c) => !c.script && !c.caption && !c.cta)
+    .map((c) => ({ id: String(c.id), title: String(c.title) }));
+}
+
 // Aprovar materializa o plano: cada item vira um Conteudo em "Ideia" com data e
 // hora agendadas. Depois disso o plano fica marcado como aprovado, para nao
 // criar os mesmos cards duas vezes.
+//
+// Antes de criar, arquiva os cards intocados deste mesmo mes — senao o Pipeline
+// acumularia o plano velho junto com o novo. Arquivar, nunca apagar: se voce
+// mudar de ideia, o card ainda existe no banco.
 export async function approveMonthlyPlan(
   db: SupabaseClient,
   period: { year: number; month: number },
@@ -119,6 +153,25 @@ export async function approveMonthlyPlan(
     };
   });
 
+  // Aposenta o resto do plano anterior antes de criar o novo.
+  const intocados = await listUntouchedFromMonth(db, period);
+  if (intocados.length > 0) {
+    const { error: errArquivar } = await db
+      .from("contents")
+      .update({ archived: true })
+      .in(
+        "id",
+        intocados.map((c) => c.id),
+      );
+    if (errArquivar) throw new Error(errArquivar.message);
+
+    await emit(db, {
+      type: "conteudo.arquivado",
+      workspaceId,
+      payload: { origem: "plano-substituido", quantidade: intocados.length },
+    });
+  }
+
   const { data: created, error } = await db.from("contents").insert(rows).select("id");
   if (error) throw new Error(error.message);
 
@@ -137,4 +190,9 @@ export async function approveMonthlyPlan(
   });
 
   return (created ?? []).length;
+}
+
+export interface ApprovePreview {
+  criar: number;
+  arquivar: { id: string; title: string }[];
 }

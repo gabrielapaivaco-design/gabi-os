@@ -24,10 +24,13 @@ export function PlanPanel({
   period,
   plan,
   aiConfigured,
+  aArquivar = [],
 }: {
   period: { year: number; month: number };
   plan: StoredPlan | null;
   aiConfigured: boolean;
+  // Cards intocados deste mes que a aprovacao vai aposentar.
+  aArquivar?: { id: string; title: string }[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -208,6 +211,7 @@ export function PlanPanel({
       {criados !== null && (
         <p className="rounded-control border border-line bg-canvas px-3 py-2 text-[13px] text-ink">
           {criados} conteudos criados no Pipeline, ja agendados no Calendario.
+          {aArquivar.length > 0 && ` ${aArquivar.length} cards antigos foram arquivados.`}
         </p>
       )}
 
@@ -237,7 +241,19 @@ export function PlanPanel({
                   </>
                 ) : null}
                 Aprovar cria {plan.items.length} cards em &quot;Ideia&quot;, cada um com data e
-                hora. Gerar de novo descarta esta proposta.
+                hora.{" "}
+                {aArquivar.length > 0 && (
+                  <>
+                    e arquiva{" "}
+                    <span className="text-ink">
+                      {aArquivar.length}{" "}
+                      {aArquivar.length === 1 ? "card antigo" : "cards antigos"} deste mes que
+                      nunca saiu do papel
+                    </span>{" "}
+                    (sem roteiro, legenda nem CTA). Card em que voce ja mexeu nao e tocado.{" "}
+                  </>
+                )}
+                Gerar de novo descarta esta proposta.
               </>
             )}
           </p>

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { buildPlanningContext, summarizeContext } from "@/lib/planning/context";
-import { loadMonthlyPlan, type StoredPlan } from "@/lib/planning/service";
+import { loadMonthlyPlan, listUntouchedFromMonth, type StoredPlan } from "@/lib/planning/service";
 import { monthLabel } from "@/lib/calendar/month";
 import { isAiConfigured } from "@/lib/ai";
 import { PlanPanel } from "./plan-panel";
@@ -11,6 +11,7 @@ export default async function PlanejamentoPage() {
 
   let summary: ReturnType<typeof summarizeContext> = [];
   let plan: StoredPlan | null = null;
+  let aArquivar: { id: string; title: string }[] = [];
   let unavailable = false;
 
   try {
@@ -18,6 +19,9 @@ export default async function PlanejamentoPage() {
     const ctx = await buildPlanningContext(db, period);
     summary = summarizeContext(ctx);
     plan = await loadMonthlyPlan(db, period);
+    // Cards do plano anterior que aprovar vai aposentar. Mostrados antes, para
+    // que arquivar nunca seja surpresa.
+    if (plan && !plan.approved) aArquivar = await listUntouchedFromMonth(db, period);
   } catch {
     unavailable = true;
   }
@@ -40,7 +44,12 @@ export default async function PlanejamentoPage() {
         </p>
       ) : (
         <div className="flex flex-col gap-5">
-          <PlanPanel period={period} plan={plan} aiConfigured={isAiConfigured()} />
+          <PlanPanel
+            period={period}
+            plan={plan}
+            aiConfigured={isAiConfigured()}
+            aArquivar={aArquivar}
+          />
 
           <section className="rounded-card border border-line bg-surface p-5">
             <div className="mb-3 flex items-baseline justify-between">

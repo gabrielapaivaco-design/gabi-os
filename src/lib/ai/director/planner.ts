@@ -196,6 +196,7 @@ Depois defina o foco do mes: uma aposta central que decorra do diagnostico.
 
 Entao proponha os conteudos. Regras:
 - Volume realista para o tempo que resta, nao para um mes cheio. Prefira poucos conteudos que saem a muitos que ficam no papel.
+- **Varie o formato.** Um mes precisa de pelo menos tres formatos diferentes, e nenhum deles pode passar de dois tercos do total. Mesmo quando um formato tem o melhor alcance, um mes inteiro dele e um mes pobre: Reel puxa alcance novo, Carrossel entrega profundidade e rende salvamento, Stories sustentam presenca diaria e conversa no direct, Foto unica ancora identidade. Alcance nao e a unica funcao do conteudo.
 - No campo why, so cite dia da semana se ele corresponder a data que voce escolheu. Conferir isso e sua responsabilidade.
 - Aproveite primeiro os Momentos que ainda nao viraram conteudo — eles ja aconteceram na vida dela e por isso rendem material especifico. Use o indice da lista em momentIndex.
 - Use os melhores horarios informados para escolher a hora. Se nao houver dado para o dia, escolha o horario mais proximo entre os que existem.
