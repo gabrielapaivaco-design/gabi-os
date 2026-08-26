@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { emit } from "@/lib/events/bus";
 import { getWorkspaceId } from "@/lib/workspace/current";
-import type { MonthlyPlan, PlannedItem } from "@/lib/ai/director/planner";
+import { montarSemana, type MonthlyPlan, type PlannedItem } from "@/lib/ai/director/planner";
 
 // Persistencia do plano mensal. A proposta vive em `monthly_plans` com
 // `approved = false` ate a pessoa aceitar; so entao vira Conteudo de verdade
@@ -76,11 +76,11 @@ export async function loadMonthlyPlan(
     diagnosis: String(p.diagnosis ?? ""),
     focus: String(p.focus ?? ""),
     items: Array.isArray(p.items) ? (p.items as StoredItem[]) : [],
-    // Planos gerados antes desta versao nao tem rotina; lista vazia e a leitura
-    // correta, e a tela apenas nao mostra a secao.
-    storiesRoutine: Array.isArray(p.storiesRoutine)
-      ? (p.storiesRoutine as StoredPlan["storiesRoutine"])
-      : [],
+    // Saneado na leitura, e nao so na gravacao: planos ja salvos com dia
+    // repetido (aconteceu — "domingo" veio duas vezes) passam a exibir a semana
+    // certa sem precisar gerar de novo. Planos antigos, sem rotina, devolvem
+    // lista vazia e a tela apenas nao mostra a secao.
+    storiesRoutine: montarSemana(p.storiesRoutine),
     approved: !!data.approved,
     generatedAt: String(data.generated_at ?? ""),
   };

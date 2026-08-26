@@ -378,6 +378,24 @@ export function renderPlanningContext(ctx: PlanningContext): string {
   return partes.join("\n\n");
 }
 
+// Reconstroi a semana a partir do que o modelo devolveu: no maximo um tema por
+// dia, na ordem de segunda a domingo, sem inventar dia que ele nao preencheu.
+export function montarSemana(bruto: unknown): StoriesDay[] {
+  if (!Array.isArray(bruto)) return [];
+
+  const porDia = new Map<string, StoriesDay>();
+  for (const d of bruto as Record<string, unknown>[]) {
+    const weekday = String(d?.weekday ?? "").toLowerCase().trim();
+    const theme = String(d?.theme ?? "").trim();
+    // Dia fora da semana ou sem tema nao ajuda ninguem a gravar nada.
+    if (!theme || !WEEKDAYS.includes(weekday as (typeof WEEKDAYS)[number])) continue;
+    if (porDia.has(weekday)) continue;
+    porDia.set(weekday, { weekday, theme, why: String(d?.why ?? "").trim() });
+  }
+
+  return WEEKDAYS.map((dia) => porDia.get(dia)).filter((d): d is StoriesDay => !!d);
+}
+
 function parsePlan(parsed: unknown): MonthlyPlan {
   if (!parsed || typeof parsed !== "object") {
     throw new AiProviderError("A IA devolveu um plano que nao consegui interpretar.");
@@ -387,18 +405,11 @@ function parsePlan(parsed: unknown): MonthlyPlan {
     throw new AiProviderError("A IA nao devolveu a lista de conteudos do mes.");
   }
 
-  // Ordena pela semana e nao pela ordem que o modelo devolveu, para a rotina
-  // sempre ler de segunda a domingo.
-  const rotina = Array.isArray(v.storiesRoutine)
-    ? (v.storiesRoutine as Record<string, unknown>[])
-        .map((d) => ({
-          weekday: String(d.weekday ?? ""),
-          theme: String(d.theme ?? ""),
-          why: String(d.why ?? ""),
-        }))
-        .filter((d) => d.theme)
-        .sort((a, b) => WEEKDAYS.indexOf(a.weekday as never) - WEEKDAYS.indexOf(b.weekday as never))
-    : [];
+  // A semana tem sete dias, mas o modelo as vezes devolve oito — ja aconteceu
+  // com "domingo" repetido. Um dia duplicado na tela vira duas tarefas para o
+  // mesmo dia, entao aqui a semana e reconstruida: para cada dia real, a
+  // primeira entrada que o modelo deu para ele.
+  const rotina = montarSemana(v.storiesRoutine);
 
   return {
     diagnosis: String(v.diagnosis ?? ""),
