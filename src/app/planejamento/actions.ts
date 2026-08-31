@@ -6,7 +6,13 @@ import { AiNotConfiguredError } from "@/lib/ai";
 import { generateMonthlyPlan } from "@/lib/ai/director/planner";
 import { chatAboutPlan } from "@/lib/ai/director/plan-chat";
 import { buildPlanningContext } from "@/lib/planning/context";
-import { approveMonthlyPlan, loadMonthlyPlan, saveMonthlyPlan } from "@/lib/planning/service";
+import {
+  approveMonthlyPlan,
+  carryOverContents,
+  loadMonthlyPlan,
+  retireContents,
+  saveMonthlyPlan,
+} from "@/lib/planning/service";
 
 type Turn = { role: "user" | "assistant"; content: string };
 
@@ -57,6 +63,38 @@ export async function generatePlanAction(
 
   revalidatePath("/planejamento");
   return { ok: true };
+}
+
+// Virada de mes: o que sobrou do mes anterior vem para ca, ou se aposenta.
+// Nada acontece sozinho — a tela pergunta e estas actions executam a escolha.
+export async function carryOverAction(
+  ids: string[],
+  destino: { year: number; month: number },
+): Promise<PlanActionResult> {
+  try {
+    const n = await carryOverContents(createClient(), ids, destino);
+    revalidarVirada();
+    return { ok: true, created: n };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Nao consegui trazer." };
+  }
+}
+
+export async function retireAction(ids: string[]): Promise<PlanActionResult> {
+  try {
+    const n = await retireContents(createClient(), ids);
+    revalidarVirada();
+    return { ok: true, created: n };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Nao consegui aposentar." };
+  }
+}
+
+function revalidarVirada(): void {
+  revalidatePath("/planejamento");
+  revalidatePath("/pipeline");
+  revalidatePath("/calendario");
+  revalidatePath("/");
 }
 
 export type PlanChatResult =

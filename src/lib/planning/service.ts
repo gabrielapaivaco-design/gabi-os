@@ -116,6 +116,121 @@ export async function listUntouchedFromMonth(
     .map((c) => ({ id: String(c.id), title: String(c.title) }));
 }
 
+export interface Leftover {
+  id: string;
+  title: string;
+  status: string;
+  format: string | null;
+  plannedAt: string;
+  // Sinal de trabalho: quem ja tem roteiro ou legenda custa mais para descartar.
+  trabalhado: boolean;
+}
+
+// O que sobrou de um mes: planejado nele e nao publicado.
+//
+// Deliberadamente mais amplo que `listUntouchedFromMonth`, que so pega o
+// intocado. Aqui entra tambem o card com roteiro escrito que nao chegou a ser
+// gravado — justamente o que mais vale trazer adiante, porque ja tem trabalho
+// dentro. Quem decide o destino e a pessoa, na tela.
+export async function listLeftovers(
+  db: SupabaseClient,
+  period: { year: number; month: number },
+): Promise<Leftover[]> {
+  const inicio = new Date(period.year, period.month, 1).toISOString();
+  const fim = new Date(period.year, period.month + 1, 1).toISOString();
+
+  const { data, error } = await db
+    .from("contents")
+    .select("id, title, status, format, planned_at, script, caption, cta")
+    .eq("workspace_id", getWorkspaceId())
+    .eq("archived", false)
+    .neq("status", "publicado")
+    .gte("planned_at", inicio)
+    .lt("planned_at", fim)
+    .order("planned_at", { ascending: true });
+
+  if (error) return [];
+
+  return ((data ?? []) as Record<string, unknown>[]).map((c) => ({
+    id: String(c.id),
+    title: String(c.title),
+    status: String(c.status),
+    format: (c.format as string | null) ?? null,
+    plannedAt: String(c.planned_at),
+    trabalhado: !!(c.script || c.caption || c.cta),
+  }));
+}
+
+// Traz conteudos para outro mes, preservando o dia e a hora quando possivel.
+// Dia 31 num mes de 30 cai no ultimo dia, em vez de virar o mes seguinte.
+export async function carryOverContents(
+  db: SupabaseClient,
+  ids: string[],
+  destino: { year: number; month: number },
+): Promise<number> {
+  if (ids.length === 0) return 0;
+  const workspaceId = getWorkspaceId();
+
+  const { data, error } = await db
+    .from("contents")
+    .select("id, planned_at")
+    .eq("workspace_id", workspaceId)
+    .in("id", ids);
+
+  if (error) throw new Error(error.message);
+
+  const ultimoDia = new Date(destino.year, destino.month + 1, 0).getDate();
+
+  for (const c of (data ?? []) as { id: string; planned_at: string }[]) {
+    const antigo = new Date(c.planned_at);
+    const dia = Math.min(antigo.getDate(), ultimoDia);
+    const novo = new Date(
+      destino.year,
+      destino.month,
+      dia,
+      antigo.getHours(),
+      antigo.getMinutes(),
+    );
+
+    const { error: errUpd } = await db
+      .from("contents")
+      .update({ planned_at: novo.toISOString() })
+      .eq("id", c.id)
+      .eq("workspace_id", workspaceId);
+    if (errUpd) throw new Error(errUpd.message);
+  }
+
+  await emit(db, {
+    type: "conteudo.agendado",
+    workspaceId,
+    payload: { origem: "virada-de-mes", quantidade: (data ?? []).length },
+  });
+
+  return (data ?? []).length;
+}
+
+export async function retireContents(db: SupabaseClient, ids: string[]): Promise<number> {
+  if (ids.length === 0) return 0;
+  const workspaceId = getWorkspaceId();
+
+  const { data, error } = await db
+    .from("contents")
+    .update({ archived: true })
+    .eq("workspace_id", workspaceId)
+    .in("id", ids)
+    .select("id");
+
+  if (error) throw new Error(error.message);
+
+  await emit(db, {
+    type: "conteudo.arquivado",
+    workspaceId,
+    payload: { origem: "virada-de-mes", quantidade: (data ?? []).length },
+  });
+
+  return (data ?? []).length;
+}
+
 // Aprovar materializa o plano: cada item vira um Conteudo em "Ideia" com data e
 // hora agendadas. Depois disso o plano fica marcado como aprovado, para nao
 // criar os mesmos cards duas vezes.
