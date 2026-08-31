@@ -3,7 +3,7 @@
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Historico da IA</h1>
+      <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Historico da IA</h1>
       <p className="mt-3 text-[13px] leading-relaxed text-muted">
         Nao consegui carregar o historico: {error.message}
       </p>

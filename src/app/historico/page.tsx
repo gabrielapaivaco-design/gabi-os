@@ -16,7 +16,7 @@ export default async function HistoricoPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Historico da IA</h1>
+        <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Historico da IA</h1>
         <p className="mt-0.5 text-[13px] text-muted">
           Tudo o que o Diretor de Conteudo gerou neste workspace, com o custo em tokens.
         </p>

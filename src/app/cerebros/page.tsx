@@ -28,7 +28,7 @@ export default async function CerebrosPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Cerebros</h1>
+        <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Cerebros</h1>
         <p className="mt-0.5 text-[13px] text-muted">
           O que o Diretor de Conteudo sabe sobre voce. Quanto mais preenchido, mais a IA escreve
           na sua voz — e nao numa voz generica.

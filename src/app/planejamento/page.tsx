@@ -31,7 +31,7 @@ export default async function PlanejamentoPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Planejamento do mes</h1>
+        <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Planejamento do mes</h1>
         <p className="mt-0.5 text-[13px] capitalize text-muted">
           {monthLabel(period.year, period.month)}
         </p>

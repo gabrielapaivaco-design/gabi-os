@@ -34,7 +34,7 @@ export default async function ConciliacaoPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Conciliacao</h1>
+        <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Conciliacao</h1>
         <p className="mt-0.5 text-[13px] leading-relaxed text-muted">
           Ligar o que voce planejou aqui ao que realmente saiu na plataforma. E o vinculo que
           permite ao Diretor aprender qual formato, pilar e hook deram resultado.

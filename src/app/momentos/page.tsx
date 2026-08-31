@@ -56,7 +56,7 @@ export default async function MomentosPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Momentos</h1>
+        <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Momentos</h1>
         <p className="mt-0.5 text-[13px] text-muted">
           Registre o que acontecer, sem filtro. A classificacao vem depois.
         </p>

@@ -1,6 +1,22 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
+import { Newsreader, Work_Sans } from "next/font/google";
 import "./globals.css";
+
+// Work Sans no corpo, Newsreader nos titulos. `display: swap` para o texto
+// aparecer na fonte de sistema enquanto a real carrega, em vez de piscar vazio.
+const workSans = Work_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-work-sans",
+  display: "swap",
+});
+
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  variable: "--font-newsreader",
+  display: "swap",
+});
 import { headers } from "next/headers";
 import { Sidebar } from "@/components/layout/sidebar";
 import { createClient } from "@/lib/supabase/server";
@@ -32,7 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="pt-BR" className={GeistSans.variable}>
+    <html lang="pt-BR" className={`${workSans.variable} ${newsreader.variable}`}>
       <body className="font-sans">
         {userEmail !== null ? (
           <div className="flex min-h-screen">

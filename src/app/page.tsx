@@ -157,7 +157,7 @@ export default async function HojePage() {
     <div>
       <header className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{saudacao()}, Gabriela</h1>
+          <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">{saudacao()}, Gabriela</h1>
           <p className="text-[13px] text-muted mt-0.5 first-letter:uppercase">{hoje}</p>
         </div>
         <Link
@@ -168,8 +168,10 @@ export default async function HojePage() {
         </Link>
       </header>
 
-      <section className="rounded-card border border-line bg-surface p-5 mb-5">
-        <div className="text-[12px] text-faint mb-2">Briefing do diretor</div>
+      <section className="mb-5 rounded-card bg-surface p-6">
+        <div className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-rose-ink">
+          Briefing do diretor
+        </div>
         {unavailable ? (
           <>
             <p className="text-sm leading-relaxed text-ink">
@@ -182,17 +184,22 @@ export default async function HojePage() {
             )}
           </>
         ) : hasData ? (
-          <p className="text-sm leading-relaxed text-ink">
-            Voce tem {totalMoments} {totalMoments === 1 ? "Momento registrado" : "Momentos registrados"}
+          <p className="max-w-[620px] font-serif text-[21px] font-light leading-[1.5] text-ink">
+            Voce tem{" "}
+            <span className="border-b-2 border-rose-tint">
+              {totalMoments} {totalMoments === 1 ? "Momento" : "Momentos"}
+            </span>{" "}
+            {totalMoments === 1 ? "registrado" : "registrados"}
             {unconvertedMoments > 0 && <> — {unconvertedMoments} ainda sem virar conteudo</>}.{" "}
             {activeContents > 0 && (
               <>
-                {activeContents} {activeContents === 1 ? "conteudo em andamento" : "conteudos em andamento"} no Pipeline.
+                <span className="border-b-2 border-rose-tint">{activeContents} conteudos</span> em
+                andamento no Pipeline.
               </>
             )}
           </p>
         ) : (
-          <p className="text-sm leading-relaxed text-ink">
+          <p className="max-w-[620px] font-serif text-[21px] font-light leading-[1.5] text-ink">
             Bem-vinda ao seu segundo cerebro. Ainda estou coletando seus primeiros
             dados. Comece registrando um Momento sempre que algo interessante
             acontecer na sua vida &mdash; e eu transformo em conteudo a partir dai.

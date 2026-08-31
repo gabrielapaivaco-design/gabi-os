@@ -22,7 +22,9 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-[200px] shrink-0 flex-col border-r border-line bg-canvas px-3 py-5">
+    // Sem borda direita: no papel quente os cartoes ja separam a sidebar do
+    // conteudo, e a linha vertical cortava a tela ao meio sem precisar.
+    <aside className="flex w-[228px] shrink-0 flex-col bg-canvas px-4 py-6">
       {/* Marca ativa no topo: e o primeiro dado que a pessoa precisa ver, porque
           define o que todas as telas abaixo estao mostrando. */}
       <WorkspaceSwitcher workspaces={workspaces} activeWorkspaceId={activeWorkspaceId} />
@@ -35,10 +37,8 @@ export function Sidebar({
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-2.5 rounded-control px-3 py-2 text-[13px] transition-colors duration-150 ease-premium",
-                active
-                  ? "border border-line bg-surface font-medium text-ink"
-                  : "text-muted hover:text-ink",
+                "flex items-center gap-3 rounded-control px-3.5 py-2.5 text-[14px] transition-colors duration-150 ease-premium",
+                active ? "bg-surface font-medium text-ink" : "text-muted hover:text-ink",
               )}
             >
               <Icon size={15} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-rose" : ""} />

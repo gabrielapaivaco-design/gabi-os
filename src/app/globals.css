@@ -4,15 +4,18 @@
 
 :root { color-scheme: light; }
 
+/* Papel quente. Estes tres valores repetem os tokens `canvas`, `ink` e `rose`
+   do tailwind.config.ts — sao a unica duplicacao, porque o body pinta antes de
+   qualquer classe e o foco precisa de uma cor literal. Mudou la, muda aqui. */
 body {
-  background: #FAFAF8;
-  color: #18181B;
+  background: #F5EEE4;
+  color: #2A231C;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 /* Foco acessivel, na cor de identidade. */
 :focus-visible {
-  outline: 2px solid #B76E79;
+  outline: 2px solid #A85C68;
   outline-offset: 2px;
 }

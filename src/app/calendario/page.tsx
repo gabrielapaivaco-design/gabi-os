@@ -59,7 +59,7 @@ export default async function CalendarioPage() {
     <div>
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Calendario</h1>
+          <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Calendario</h1>
           <p className="mt-0.5 text-[13px] text-muted">
             Arraste conteudos do Pipeline para os dias do mes.
           </p>

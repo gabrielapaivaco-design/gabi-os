@@ -98,7 +98,7 @@ export default async function PipelinePage({
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Pipeline</h1>
+        <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Pipeline</h1>
         <p className="mt-0.5 text-[13px] text-muted">
           Arraste os cards entre os status conforme o conteudo avanca.
         </p>
