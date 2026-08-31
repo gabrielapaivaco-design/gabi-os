@@ -19,11 +19,25 @@ export interface AiMessage {
 // ou simplesmente ignora).
 export type AiEffort = "low" | "medium" | "high";
 
+// Quanta capacidade a tarefa merece — o outro eixo, independente do esforco.
+// Tambem portavel: cada provedor escolhe entre os modelos que tem.
+//
+// A divisao e por destino do texto, nao por dificuldade aparente:
+//   "best"      — o que vai para o mundo ou decide o mes (roteiro, legenda,
+//                 plano, analise). Economizar aqui economiza no produto.
+//   "efficient" — o que ela le, edita e aprova antes de virar qualquer coisa
+//                 (metas, conversa). Uma proposta boa basta; ela e o filtro.
+//
+// O padrao e "best" de proposito: uma tarefa nova nasce no modelo melhor, e
+// baixar e uma decisao consciente — nunca um esquecimento.
+export type AiTier = "efficient" | "best";
+
 export interface AiGenerateRequest {
   system: string;
   messages: AiMessage[];
   maxTokens?: number;
   effort?: AiEffort;
+  tier?: AiTier;
   // JSON Schema da saida esperada. Provedores que suportam saida estruturada
   // nativa usam; os demais precisam instruir via prompt e validar.
   jsonSchema?: Record<string, unknown>;
@@ -45,7 +59,10 @@ export interface AiGenerateResult {
 
 export interface AiProvider {
   readonly name: string;
-  readonly model: string;
+  // Qual modelo atende um nivel. Existe para a auditoria poder registrar o
+  // modelo certo quando a chamada falha antes de haver resposta — sem isso o
+  // historico culparia sempre o mesmo modelo, inclusive o que nem rodou.
+  modelFor(tier?: AiTier): string;
   generate(request: AiGenerateRequest): Promise<AiGenerateResult>;
 }
 

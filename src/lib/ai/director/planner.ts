@@ -145,6 +145,9 @@ export async function generateMonthlyPlan(
     messages: [{ role: "user", content: `${renderPlanningContext(context)}\n\n---\n\n${instrucao}` }],
     jsonSchema: PLAN_SCHEMA,
     effort: "high",
+    // Explicito, ainda que seja o padrao: e a chamada mais cara do sistema e a
+    // que menos deve ser barateada — decide o mes inteiro, uma vez por mes.
+    tier: "best",
     maxTokens: 16000,
   });
 

@@ -14,6 +14,15 @@ import { isAiConfigured } from "@/lib/ai";
 import { PlanPanel } from "./plan-panel";
 import { MonthRollover } from "./month-rollover";
 
+// Gerar o plano do mes e a chamada mais longa do sistema: o modelo le o cenario
+// inteiro e devolve o mes todo, o que passa de um minuto. Server Actions correm
+// dentro da funcao da rota que as disparou, entao o teto precisa ser declarado
+// aqui — e nao no arquivo de actions, que nao vira funcao propria.
+//
+// Literal e nao constante importada de proposito: o Next so le este valor por
+// analise estatica, e uma variavel importada seria silenciosamente ignorada.
+export const maxDuration = 300;
+
 // O mes vem da URL (`?mes=2026-09`) e cai no mes corrente quando ausente.
 // Sem isso a tela ficaria presa em "hoje": nao daria para olhar o que foi
 // planejado no mes passado nem adiantar o proximo.

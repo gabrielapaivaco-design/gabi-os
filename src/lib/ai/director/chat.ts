@@ -70,6 +70,9 @@ export async function chatWithDirector(
       // Conversa pede resposta rapida; o esforco alto fica para as tarefas
       // estruturadas, onde a qualidade do texto final importa mais que o tempo.
       effort: "medium",
+      // Pelo mesmo motivo: numa conversa ela corrige na mensagem seguinte, e
+      // muitas idas e voltas curtas sao onde o modelo caro pesa sem aparecer.
+      tier: "efficient",
       maxTokens: 8000,
     });
     text = result.text.trim();
@@ -80,7 +83,7 @@ export async function chatWithDirector(
       reply: text,
     });
   } catch (err) {
-    await logChat(db, contentId, provider.name, provider.model, {
+    await logChat(db, contentId, provider.name, provider.modelFor("efficient"), {
       turns: history.length,
       error: err instanceof Error ? err.message : "Erro desconhecido.",
     });

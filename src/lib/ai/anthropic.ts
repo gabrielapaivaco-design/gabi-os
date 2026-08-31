@@ -4,12 +4,22 @@ import {
   type AiGenerateRequest,
   type AiGenerateResult,
   type AiProvider,
+  type AiTier,
 } from "./types";
 
 // Implementacao Anthropic do contrato em ./types. Tudo que e especifico da
 // API do Claude fica confinado neste arquivo.
 
-const MODEL = "claude-opus-5";
+// Os dois niveis, traduzidos para modelos. Opus 5 custa 5/25 dolares por milhao
+// de tokens (entrada/saida); Sonnet 5 custa 2/10 — dois e meio a menos nas duas
+// pontas. Como o sistema manda o contexto inteiro (Cerebros, Momentos, posts)
+// em toda chamada, a entrada e o lado que pesa.
+const MODELS: Record<AiTier, string> = {
+  best: "claude-opus-5",
+  efficient: "claude-sonnet-5",
+};
+
+const DEFAULT_TIER: AiTier = "best";
 // Teto de saida. Cobre pensamento + texto: no Claude Opus 5 o pensamento
 // adaptativo esta ligado por padrao e consome deste mesmo orcamento, entao um
 // valor apertado trunca a resposta no meio. 16k e o teto seguro para
@@ -21,12 +31,12 @@ export function createAnthropicProvider(apiKey: string): AiProvider {
 
   return {
     name: "anthropic",
-    model: MODEL,
+    modelFor: (tier?: AiTier) => MODELS[tier ?? DEFAULT_TIER],
 
     async generate(request: AiGenerateRequest): Promise<AiGenerateResult> {
       try {
         const params = {
-          model: MODEL,
+          model: MODELS[request.tier ?? DEFAULT_TIER],
           max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
           system: request.system,
           messages: request.messages.map((m) => ({ role: m.role, content: m.content })),

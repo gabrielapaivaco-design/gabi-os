@@ -46,6 +46,20 @@ describe("getAiProvider", () => {
     process.env.ANTHROPIC_API_KEY = "sk-ant-teste";
     const provider = getAiProvider();
     expect(provider.name).toBe("anthropic");
-    expect(provider.model).toBe("claude-opus-5");
+    expect(provider.modelFor("best")).toBe("claude-opus-5");
+  });
+
+  it("cada nivel resolve para um modelo diferente", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-teste";
+    const provider = getAiProvider();
+    expect(provider.modelFor("efficient")).not.toBe(provider.modelFor("best"));
+  });
+
+  it("sem nivel declarado, usa o melhor modelo", () => {
+    // O padrao protege contra esquecimento: uma tarefa nova que nao declare
+    // nivel nasce no modelo bom, em vez de ser barateada em silencio.
+    process.env.ANTHROPIC_API_KEY = "sk-ant-teste";
+    const provider = getAiProvider();
+    expect(provider.modelFor()).toBe(provider.modelFor("best"));
   });
 });

@@ -69,6 +69,9 @@ export async function chatAboutPlan(
     system: CHAT_SYSTEM,
     messages,
     effort: "medium",
+    // Conversa sobre o plano. O plano em si continua no melhor modelo — aqui e
+    // so a discussao que leva ate o pedido de refazer.
+    tier: "efficient",
     maxTokens: 8000,
   });
 

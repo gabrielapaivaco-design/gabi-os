@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAiProvider, AiProviderError, type AiGenerateResult } from "@/lib/ai";
+import { getAiProvider, AiProviderError, type AiGenerateResult, type AiTier } from "@/lib/ai";
 import { emit } from "@/lib/events/bus";
 import { getWorkspaceId } from "@/lib/workspace/current";
 import { buildContentContext, renderContextForPrompt } from "./context";
@@ -37,6 +37,16 @@ export type DirectorOutput =
   | { task: "ideias"; data: { ideas: IdeaSuggestion[] } }
   | { task: "analise"; data: ContentAnalysis };
 
+// Roteiro, legenda e analise saem no melhor modelo: os dois primeiros sao o
+// texto que vai ao ar, e a analise so vale se ler as metricas de verdade.
+// "ideias" e proposta descartavel — ela escolhe uma e joga o resto fora.
+const TIER_POR_TAREFA: Record<DirectorTask, AiTier> = {
+  roteiro: "best",
+  legenda: "best",
+  analise: "best",
+  ideias: "efficient",
+};
+
 export async function runDirector(
   db: SupabaseClient,
   contentId: string,
@@ -44,6 +54,7 @@ export async function runDirector(
 ): Promise<DirectorOutput> {
   const provider = getAiProvider();
   const context = await buildContentContext(db, contentId);
+  const tier = TIER_POR_TAREFA[task];
 
   let result: AiGenerateResult;
   try {
@@ -57,6 +68,7 @@ export async function runDirector(
       ],
       jsonSchema: TASK_SCHEMAS[task],
       effort: "high",
+      tier,
     });
   } catch (err) {
     // A falha tambem e auditada: sem isso, um problema recorrente com um
@@ -65,7 +77,7 @@ export async function runDirector(
       contentId,
       task,
       provider: provider.name,
-      model: provider.model,
+      model: provider.modelFor(tier),
       error: err instanceof Error ? err.message : "Erro desconhecido.",
     });
     throw err;

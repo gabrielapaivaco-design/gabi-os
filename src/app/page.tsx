@@ -10,6 +10,10 @@ import type { ContentStatus } from "@/types/db";
 import { GoalsWidget, type Goal } from "./goals-widget";
 import { isAiConfigured } from "@/lib/ai";
 
+// Sugerir as metas do trimestre roda daqui e leva dezenas de segundos. Ver a
+// nota em /planejamento sobre por que o valor mora na rota, e literal.
+export const maxDuration = 300;
+
 function saudacao() {
   const h = new Date().getHours();
   if (h < 12) return "Bom dia";

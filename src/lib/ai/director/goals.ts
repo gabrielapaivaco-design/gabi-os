@@ -107,6 +107,9 @@ Depois as metas. Regras:
     messages: [{ role: "user", content: `${renderPlanningContext(context)}\n\n---\n\n${prompt}` }],
     jsonSchema: GOALS_SCHEMA,
     effort: "high",
+    // Proposta, nao decisao: ela le, corta e edita antes de qualquer meta valer.
+    // Esse filtro humano e o que torna o modelo economico suficiente aqui.
+    tier: "efficient",
     maxTokens: 8000,
   });
 

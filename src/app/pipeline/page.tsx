@@ -6,6 +6,10 @@ import { dayKeyFromIso } from "@/lib/calendar/month";
 import type { ContentStatus } from "@/types/db";
 import { PipelineBoard, type ContentCardData, type PillarOption } from "./pipeline-board";
 
+// Roteiro, legenda, analise e a conversa com o Diretor saem daqui. Ver a nota
+// em /planejamento sobre por que o valor mora na rota, e literal.
+export const maxDuration = 300;
+
 type Columns = Record<ContentStatus, ContentCardData[]>;
 
 function emptyColumns(): Columns {
