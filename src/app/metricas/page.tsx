@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Link2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { listExternalPosts } from "@/lib/metrics/service";
+import { listExternalPosts, listReconcilableContents } from "@/lib/metrics/service";
 import { lerPosts, formatoLabel, type Leitura, type PostLido } from "@/lib/metrics/analysis";
 import { platformLabel } from "@/lib/metrics/types";
 
@@ -25,17 +25,29 @@ function data(iso: string | null): string {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(iso));
 }
 
-async function carregar(): Promise<{ leitura: Leitura | null; erro: string | null }> {
+async function carregar(): Promise<{
+  leitura: Leitura | null;
+  conciliaveis: number;
+  erro: string | null;
+}> {
   try {
-    const posts = await listExternalPosts(createClient());
-    return { leitura: lerPosts(posts), erro: null };
+    const db = createClient();
+    const [posts, conteudos] = await Promise.all([
+      listExternalPosts(db),
+      listReconcilableContents(db),
+    ]);
+    return { leitura: lerPosts(posts), conciliaveis: conteudos.length, erro: null };
   } catch (err) {
-    return { leitura: null, erro: err instanceof Error ? err.message : "Erro desconhecido." };
+    return {
+      leitura: null,
+      conciliaveis: 0,
+      erro: err instanceof Error ? err.message : "Erro desconhecido.",
+    };
   }
 }
 
 export default async function MetricasPage() {
-  const { leitura, erro } = await carregar();
+  const { leitura, conciliaveis, erro } = await carregar();
 
   return (
     <div>
@@ -53,7 +65,7 @@ export default async function MetricasPage() {
         <SemDados />
       ) : (
         <div className="flex flex-col gap-5">
-          <Resumo l={leitura} />
+          <Resumo l={leitura} conciliaveis={conciliaveis} />
           {leitura.porFormato.length > 1 && <Formatos l={leitura} />}
           {leitura.melhores.length > 0 && <Pontas l={leitura} />}
           <Tabela l={leitura} />
@@ -98,7 +110,7 @@ function SemDados() {
   );
 }
 
-function Resumo({ l }: { l: Leitura }) {
+function Resumo({ l, conciliaveis }: { l: Leitura; conciliaveis: number }) {
   const a = l.alcance;
 
   return (
@@ -133,19 +145,33 @@ function Resumo({ l }: { l: Leitura }) {
         />
       </div>
 
-      {/* O elo aberto do ciclo. So aparece quando ha o que ligar — cobrar
-          conciliacao de quem ja conciliou tudo e ruido. */}
+      {/* O elo aberto do ciclo — dito de dois jeitos, porque cobrar uma acao
+          impossivel e pior que nao cobrar nada.
+
+          Hoje a Eisen Haus esta no segundo caso: 20 posts de maio a julho e um
+          unico conteudo publicado, de agosto. Nao existe par a formar. Mandar
+          "Conciliar" aqui seria mandar ela bater numa porta fechada. */}
       {l.conciliados < l.posts && (
         <p className="mt-5 border-t border-line pt-4 text-[12px] leading-relaxed text-muted">
-          {l.conciliados === 0
-            ? "Nenhum destes posts esta ligado a um conteudo do Pipeline."
-            : `${l.conciliados} de ${l.posts} posts estao ligados a um conteudo do Pipeline.`}{" "}
+          {l.conciliados > 0
+            ? `${l.conciliados} de ${l.posts} posts estao ligados a um conteudo do Pipeline. `
+            : "Nenhum destes posts esta ligado a um conteudo do Pipeline. "}
           Sem esse vinculo os numeros existem, mas o Diretor nao consegue dizer{" "}
           <em>qual pilar ou formato</em> deu resultado.{" "}
-          <Link href="/conciliacao" className="text-rose-ink underline underline-offset-2">
-            Conciliar
-          </Link>
-          .
+          {conciliaveis > 0 ? (
+            <>
+              Ha {conciliaveis} {conciliaveis === 1 ? "conteudo esperando" : "conteudos esperando"}{" "}
+              <Link href="/conciliacao" className="text-rose-ink underline underline-offset-2">
+                em Conciliacao
+              </Link>
+              .
+            </>
+          ) : (
+            <>
+              Estes posts sao anteriores ao sistema, entao nao ha conteudo a que liga-los — o elo
+              se fecha sozinho no primeiro conteudo que voce publicar a partir de um card.
+            </>
+          )}
         </p>
       )}
     </section>
