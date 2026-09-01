@@ -17,7 +17,7 @@ export const STATUS_COLOR: Record<ContentStatus, string> = {
   agendar: "#1D9E75", publicado: "#639922", analisar: "#D4537E",
 };
 
-// Nomes de cor usados em pillars.color (seed e futura UI de criacao de pillar).
+// Nomes de cor usados em pillars.color (seed e a UI de criacao de pilar).
 // Nem todo nome e uma keyword CSS valida (ex.: "rose", "amber" nao sao), entao
 // mapeamos para hex — reaproveitando a paleta ja usada em STATUS_COLOR onde faz
 // sentido, para manter consistencia visual.
@@ -32,6 +32,10 @@ const PILLAR_COLOR_NAMES: Record<string, string> = {
   rose: "#B76E79",
   coral: "#C97B63",
 };
+
+// As cores que a tela de pilares oferece. Derivada do mapa acima em vez de
+// repetida: uma cor nova entra em um lugar so.
+export const PILLAR_COLORS = Object.keys(PILLAR_COLOR_NAMES);
 
 // Aceita tanto nomes conhecidos quanto hex ja pronto (#RRGGBB); cai para um
 // cinza neutro se o nome nao for reconhecido, em vez de quebrar o estilo.

@@ -6,24 +6,29 @@ import {
   loadBrains,
   type BrainContent,
 } from "@/lib/brains/service";
+import { listPillars, type Pillar } from "@/lib/pillars/service";
 import type { BrainKind } from "@/types/db";
 import { BrainEditor } from "./brain-editor";
+import { PillarsEditor } from "./pillars-editor";
 
 const KINDS: BrainKind[] = ["brand", "business", "learned"];
 
 async function load(): Promise<{
   brains: Record<BrainKind, BrainContent>;
+  pillars: Pillar[];
   unavailable: boolean;
 }> {
   try {
-    return { brains: await loadBrains(createClient()), unavailable: false };
+    const db = createClient();
+    const [brains, pillars] = await Promise.all([loadBrains(db), listPillars(db)]);
+    return { brains, pillars, unavailable: false };
   } catch {
-    return { brains: { brand: {}, business: {}, learned: {} }, unavailable: true };
+    return { brains: { brand: {}, business: {}, learned: {} }, pillars: [], unavailable: true };
   }
 }
 
 export default async function CerebrosPage() {
-  const { brains, unavailable } = await load();
+  const { brains, pillars, unavailable } = await load();
 
   return (
     <div>
@@ -53,6 +58,10 @@ export default async function CerebrosPage() {
             suggestedSections={SUGGESTED_SECTIONS[kind]}
           />
         ))}
+
+        {/* Depois dos tres cerebros: os pilares sao o resumo operacional do que
+            eles dizem — o que a marca fala, em lista. */}
+        {!unavailable && <PillarsEditor pillars={pillars} />}
       </div>
     </div>
   );
