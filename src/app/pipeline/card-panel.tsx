@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, Sparkles, X } from "lucide-react";
+import { Check, Copy, MessageCircle, Sparkles, X } from "lucide-react";
 import type { Objective } from "@/types/db";
 import type { DirectorTask } from "@/lib/ai/director";
 import { archiveContentAction, updateContentAction } from "./actions";
@@ -49,12 +49,55 @@ function plataformaDaUrl(url: string): string | null {
 // gerado (hook, roteiro, legenda, CTA).
 const proseInputClass = `${inputClass} resize-y px-3 py-2.5 leading-[1.7]`;
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  copiar,
+}: {
+  label: string;
+  children: React.ReactNode;
+  // Presente nos campos cujo texto sai daqui para o Instagram. Sem isto, todo
+  // post comecava com a mesma selecao manual de dez linhas de roteiro.
+  copiar?: string;
+}) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] uppercase tracking-wide text-faint">{label}</span>
+      <span className="mb-1 flex items-baseline justify-between gap-3">
+        <span className="text-[11px] uppercase tracking-wide text-faint">{label}</span>
+        {copiar !== undefined && <BotaoCopiar texto={copiar} />}
+      </span>
       {children}
     </label>
+  );
+}
+
+function BotaoCopiar({ texto }: { texto: string }) {
+  const [copiado, setCopiado] = useState(false);
+
+  // Campo vazio nao oferece copia: um botao que copia nada e um botao que mente.
+  if (!texto.trim()) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={async (e) => {
+        // O botao vive dentro de um <label>; sem isto o clique tambem levaria o
+        // foco para o textarea, e a pagina daria um pulo a cada copia.
+        e.preventDefault();
+        try {
+          await navigator.clipboard.writeText(texto);
+          setCopiado(true);
+          setTimeout(() => setCopiado(false), 1600);
+        } catch {
+          // Area de transferencia negada pelo navegador. O texto continua na
+          // tela e selecionavel — avisar seria pior que deixar quieto.
+        }
+      }}
+      className="flex shrink-0 items-center gap-1 text-[11px] text-faint transition-colors hover:text-rose-ink"
+    >
+      {copiado ? <Check size={11} /> : <Copy size={11} />}
+      {copiado ? "copiado" : "copiar"}
+    </button>
   );
 }
 
@@ -373,7 +416,7 @@ export function CardPanel({
 
           {/* Campos de texto longo respiram mais que os de metadado: e neles
               que o roteiro gerado aterrissa. */}
-          <Field label="Hook">
+          <Field label="Hook" copiar={hook}>
             <textarea
               value={hook}
               onChange={(e) => setHook(e.target.value)}
@@ -381,7 +424,7 @@ export function CardPanel({
               className={proseInputClass}
             />
           </Field>
-          <Field label="Roteiro">
+          <Field label="Roteiro" copiar={script}>
             <textarea
               value={script}
               onChange={(e) => setScript(e.target.value)}
@@ -389,7 +432,7 @@ export function CardPanel({
               className={proseInputClass}
             />
           </Field>
-          <Field label="Legenda">
+          <Field label="Legenda" copiar={caption}>
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
@@ -397,7 +440,7 @@ export function CardPanel({
               className={proseInputClass}
             />
           </Field>
-          <Field label="CTA">
+          <Field label="CTA" copiar={cta}>
             <textarea
               value={cta}
               onChange={(e) => setCta(e.target.value)}

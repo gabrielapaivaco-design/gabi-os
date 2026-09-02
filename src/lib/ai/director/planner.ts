@@ -3,6 +3,7 @@ import { getAiProvider, AiProviderError } from "@/lib/ai";
 import { emit } from "@/lib/events/bus";
 import { getWorkspaceId } from "@/lib/workspace/current";
 import { buildPlanningContext, type PlanningContext } from "@/lib/planning/context";
+import { WEEKDAYS } from "@/lib/planning/weekday";
 import { DIRECTOR_SYSTEM } from "./prompts";
 
 // Planejamento do mes: o Diretor le o cenario inteiro (metricas reais,
@@ -42,15 +43,10 @@ export interface MonthlyPlan {
   storiesRoutine: StoriesDay[];
 }
 
-export const WEEKDAYS = [
-  "segunda",
-  "terca",
-  "quarta",
-  "quinta",
-  "sexta",
-  "sabado",
-  "domingo",
-] as const;
+// A definicao mora em lib/planning/weekday porque a tela Hoje tambem precisa
+// dela, e este arquivo arrasta o SDK da Anthropic junto. Reexportado para nao
+// quebrar quem ja importava daqui.
+export { WEEKDAYS };
 
 // Tipado como Record e nao com `as const`: o literal aninhado faz o TypeScript
 // inferir um tipo enorme e estourar a memoria do compilador.

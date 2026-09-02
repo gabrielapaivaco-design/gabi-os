@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ExternalLink, Link2, Unlink } from "lucide-react";
+import { Check, ExternalLink, Link2, Unlink, Wand2 } from "lucide-react";
 import { platformLabel } from "@/lib/metrics/types";
 import type { ReconcilableContent, StoredExternalPost } from "@/lib/metrics/service";
+import type { Sugestao } from "@/lib/metrics/matching";
 import { importPostsAction, linkPostAction, unlinkPostAction } from "./actions";
 
 function data(iso: string | null): string {
@@ -19,9 +20,11 @@ function num(v: number | null): string {
 export function ReconcileBoard({
   contents,
   posts,
+  sugestoes,
 }: {
   contents: ReconcilableContent[];
   posts: StoredExternalPost[];
+  sugestoes: Sugestao[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -32,16 +35,26 @@ export function ReconcileBoard({
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
   const [json, setJson] = useState("");
+  // Sugestoes que ela dispensou nesta visita. Nao vao para o banco: recusar um
+  // palpite nao e um dado sobre a marca, e na proxima importacao o palpite pode
+  // ate estar certo.
+  const [dispensadas, setDispensadas] = useState<Set<string>>(new Set());
 
   const naoConciliados = posts.filter((p) => !p.contentId);
   const conciliados = posts.filter((p) => p.contentId);
   const porContentId = new Map(conciliados.map((p) => [p.contentId!, p]));
+  const porPostId = new Map(posts.map((p) => [p.id, p]));
 
-  function vincular(contentId: string) {
-    if (!selecionado) return;
+  const sugestaoPorConteudo = new Map(
+    sugestoes.filter((s) => !dispensadas.has(s.contentId)).map((s) => [s.contentId, s]),
+  );
+
+  function vincular(contentId: string, postId?: string) {
+    const post = postId ?? selecionado;
+    if (!post) return;
     setErro(null);
     startTransition(async () => {
-      const r = await linkPostAction(selecionado, contentId);
+      const r = await linkPostAction(post, contentId);
       if (!r.ok) return setErro(r.error);
       setSelecionado(null);
       router.refresh();
@@ -197,6 +210,18 @@ export function ReconcileBoard({
                       >
                         <Link2 size={11} /> Vincular aqui
                       </button>
+                    ) : sugestaoPorConteudo.has(c.id) ? (
+                      <Palpite
+                        sugestao={sugestaoPorConteudo.get(c.id)!}
+                        post={porPostId.get(sugestaoPorConteudo.get(c.id)!.postId)}
+                        pendente={isPending}
+                        onConfirmar={() =>
+                          vincular(c.id, sugestaoPorConteudo.get(c.id)!.postId)
+                        }
+                        onDispensar={() =>
+                          setDispensadas(new Set(dispensadas).add(c.id))
+                        }
+                      />
                     ) : (
                       <p className="mt-1.5 text-[12px] text-faint">sem post vinculado</p>
                     )}
@@ -284,6 +309,62 @@ export function ReconcileBoard({
             </ul>
           )}
         </section>
+      </div>
+    </div>
+  );
+}
+
+// O palpite do sistema, dentro do conteudo a que ele se refere.
+//
+// Mostra a legenda do post e o motivo do palpite antes de qualquer botao: ela
+// precisa poder discordar sem clicar. Um palpite que se explica pode ser
+// recusado em um segundo; um que so diz "vincular?" obriga a ir conferir do
+// outro lado da tela, que era exatamente o trabalho que isto veio poupar.
+function Palpite({
+  sugestao,
+  post,
+  pendente,
+  onConfirmar,
+  onDispensar,
+}: {
+  sugestao: Sugestao;
+  post: StoredExternalPost | undefined;
+  pendente: boolean;
+  onConfirmar: () => void;
+  onDispensar: () => void;
+}) {
+  if (!post) return null;
+
+  return (
+    <div className="mt-2 rounded-control border border-rose/30 bg-rose-tint/40 p-2.5">
+      <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-rose-ink">
+        <Wand2 size={11} /> provavelmente este post
+        <span className="normal-case tracking-normal text-muted">· {sugestao.motivo}</span>
+      </p>
+
+      <p className="mt-1 line-clamp-2 text-[12.5px] leading-relaxed text-ink">
+        {post.caption?.trim() || <span className="text-faint">Sem legenda</span>}
+      </p>
+      <p className="mt-0.5 text-[11px] text-faint">
+        {data(post.publishedAt)}
+        {post.metrics?.reach !== null && post.metrics && <> · {num(post.metrics.reach)} de alcance</>}
+      </p>
+
+      <div className="mt-2 flex items-center gap-3">
+        <button
+          onClick={onConfirmar}
+          disabled={pendente}
+          className="flex items-center gap-1.5 rounded-control bg-ink px-2.5 py-1 text-[12px] font-medium text-white transition-transform duration-150 ease-premium active:scale-[0.98] disabled:opacity-40"
+        >
+          <Link2 size={11} /> E este
+        </button>
+        <button
+          onClick={onDispensar}
+          disabled={pendente}
+          className="text-[12px] text-faint transition-colors hover:text-ink disabled:opacity-40"
+        >
+          nao e
+        </button>
       </div>
     </div>
   );

@@ -9,6 +9,10 @@ import { STATUS_COLOR, STATUS_LABEL, STATUS_ORDER } from "@/lib/utils/constants"
 import type { ContentStatus } from "@/types/db";
 import { GoalsWidget, type Goal } from "./goals-widget";
 import { isAiConfigured } from "@/lib/ai";
+import { loadMonthlyPlan } from "@/lib/planning/service";
+import { weekdayDe } from "@/lib/planning/weekday";
+import type { StoriesDay } from "@/lib/ai/director/planner";
+import { StoriesHoje } from "./stories-hoje";
 
 // Sugerir as metas do trimestre roda daqui e leva dezenas de segundos. Ver a
 // nota em /planejamento sobre por que o valor mora na rota, e literal.
@@ -33,6 +37,9 @@ interface ActionItem {
 }
 
 interface HojeData {
+  // Tema de Story de hoje, vindo do plano do mes. Nulo quando o mes nao foi
+  // planejado ou quando o plano nao cobriu este dia da semana.
+  storyDeHoje: StoriesDay | null;
   totalMoments: number;
   unconvertedMoments: number;
   statusCounts: Record<ContentStatus, number>;
@@ -91,7 +98,24 @@ async function loadHoje(): Promise<HojeData> {
     const contents = (contentsRes.data ?? []) as { id: string; title: string; status: ContentStatus }[];
     for (const row of contents) statusCounts[row.status] += 1;
 
+    // O tema de Story de hoje sai do plano do mes corrente. Fora do Promise.all
+    // acima de proposito: se nao houver plano, ou se o mes ainda nao tiver sido
+    // planejado, isso e ausencia normal e nao pode derrubar a tela inteira.
+    const agora = new Date();
+    let storyDeHoje: StoriesDay | null = null;
+    try {
+      const plano = await loadMonthlyPlan(db, {
+        year: agora.getFullYear(),
+        month: agora.getMonth(),
+      });
+      const dia = weekdayDe(agora);
+      storyDeHoje = plano?.storiesRoutine.find((d) => d.weekday === dia) ?? null;
+    } catch {
+      // Plano indisponivel nao e erro da tela Hoje.
+    }
+
     return {
+      storyDeHoje,
       totalMoments,
       unconvertedMoments: Math.max(totalMoments - linkedCount, 0),
       statusCounts,
@@ -110,6 +134,7 @@ async function loadHoje(): Promise<HojeData> {
     console.error("[hoje] falha ao carregar:", causa);
 
     return {
+      storyDeHoje: null,
       totalMoments: 0,
       unconvertedMoments: 0,
       statusCounts: emptyStatusCounts(),
@@ -147,11 +172,12 @@ function ActionQueue({ title, items }: { title: string; items: ActionItem[] }) {
 }
 
 export default async function HojePage() {
-  const { totalMoments, unconvertedMoments, statusCounts, toRecord, toEdit, toPost, goals, unavailable, erro } =
+  const { storyDeHoje, totalMoments, unconvertedMoments, statusCounts, toRecord, toEdit, toPost, goals, unavailable, erro } =
     await loadHoje();
+  const agora = new Date();
   const hoje = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long", day: "numeric", month: "long",
-  }).format(new Date());
+  }).format(agora);
 
   const activeContents = Object.values(statusCounts).reduce((sum, n) => sum + n, 0);
   const hasData = !unavailable && totalMoments > 0;
@@ -210,6 +236,10 @@ export default async function HojePage() {
           </p>
         )}
       </section>
+
+      {/* Antes das metas: e a unica coisa desta tela que precisa ser feita hoje,
+          e nao ate o fim do trimestre. */}
+      <StoriesHoje dia={storyDeHoje} hoje={weekdayDe(agora)} />
 
       {!unavailable && (
         <div className="mb-5">

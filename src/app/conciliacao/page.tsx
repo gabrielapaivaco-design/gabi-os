@@ -5,11 +5,13 @@ import {
   type ReconcilableContent,
   type StoredExternalPost,
 } from "@/lib/metrics/service";
+import { sugerirVinculos, type Sugestao } from "@/lib/metrics/matching";
 import { ReconcileBoard } from "./reconcile-board";
 
 async function load(): Promise<{
   contents: ReconcilableContent[];
   posts: StoredExternalPost[];
+  sugestoes: Sugestao[];
   erro: string | null;
 }> {
   try {
@@ -18,18 +20,28 @@ async function load(): Promise<{
       listReconcilableContents(db),
       listExternalPosts(db),
     ]);
-    return { contents, posts, erro: null };
+
+    // O palpite e calculado aqui e nao guardado: ele depende do estado atual das
+    // duas listas, e um palpite gravado envelheceria em silencio a cada
+    // importacao.
+    const sugestoes = sugerirVinculos(
+      contents.filter((c) => !posts.some((p) => p.contentId === c.id)),
+      posts,
+    );
+
+    return { contents, posts, sugestoes, erro: null };
   } catch (err) {
     return {
       contents: [],
       posts: [],
+      sugestoes: [],
       erro: err instanceof Error ? err.message : "Erro desconhecido.",
     };
   }
 }
 
 export default async function ConciliacaoPage() {
-  const { contents, posts, erro } = await load();
+  const { contents, posts, sugestoes, erro } = await load();
 
   return (
     <div>
@@ -55,7 +67,7 @@ export default async function ConciliacaoPage() {
           </p>
         </>
       ) : (
-        <ReconcileBoard contents={contents} posts={posts} />
+        <ReconcileBoard contents={contents} posts={posts} sugestoes={sugestoes} />
       )}
     </div>
   );
