@@ -55,14 +55,15 @@ const config: Config = {
         ring: "#A85C68",
       },
       fontFamily: {
-        sans: ["var(--font-karla)", "system-ui", "sans-serif"],
+        sans: ["var(--font-public-sans)", "system-ui", "sans-serif"],
         // Serif editorial: titulos de tela, o briefing e os numeros das metas.
         // E o que da carater — o resto do sistema continua em sans.
         //
-        // A Instrument Serif tem contraste alto entre traco grosso e fino: e o
-        // que da a ela cara de revista em corpo grande. Pelo mesmo motivo ela
-        // nao serve para texto pequeno — abaixo de ~20px o traco fino some.
-        serif: ["var(--font-instrument-serif)", "Georgia", "serif"],
+        // Spectral: serif de texto, com traco parelho o bastante para aguentar
+        // os 17px do seletor de marca e os 44px do alcance com a mesma
+        // qualidade. A escolha aqui e por FAIXA DE TAMANHO, nao por gosto — ver
+        // a nota em src/app/layout.tsx.
+        serif: ["var(--font-spectral)", "Georgia", "serif"],
       },
       borderRadius: { card: "18px", control: "11px" },
       maxWidth: { content: "1280px" },

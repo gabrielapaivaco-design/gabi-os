@@ -30,7 +30,7 @@ export function StoriesHoje({ dia, hoje }: { dia: StoriesDay | null; hoje: Weekd
         </Link>
       </div>
 
-      <p className="max-w-[46ch] font-serif text-[28px] leading-[1.25] text-ink">{dia.theme}</p>
+      <p className="max-w-[46ch] font-serif font-light text-[28px] leading-[1.25] text-ink">{dia.theme}</p>
 
       {dia.why && (
         <p className="mt-2.5 max-w-prose text-[12.5px] leading-relaxed text-muted">{dia.why}</p>

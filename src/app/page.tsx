@@ -260,7 +260,7 @@ export default async function HojePage() {
     <div>
       <header className="mb-5 flex items-start justify-between gap-4">
         <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-0.5">
-          <h1 className="font-serif text-[34px] leading-tight tracking-tight">
+          <h1 className="font-serif font-light text-[34px] leading-tight tracking-tight">
             {saudacao()}, Gabriela
           </h1>
           <p className="text-[13px] text-faint first-letter:uppercase">{hoje}</p>
@@ -332,7 +332,7 @@ export default async function HojePage() {
           {alcance ? (
             <Tile>
               <TileLabel>Alcance tipico</TileLabel>
-              <p className="font-serif text-[44px] leading-none text-rose-ink">
+              <p className="font-serif font-light text-[44px] leading-none text-rose-ink">
                 {Math.round(alcance.mediana).toLocaleString("pt-BR")}
               </p>
               <p className="mt-2 text-[12px] leading-relaxed text-muted">
@@ -351,7 +351,7 @@ export default async function HojePage() {
           ) : (
             <Tile>
               <TileLabel>Momentos</TileLabel>
-              <p className="font-serif text-[44px] leading-none text-rose-ink">{totalMoments}</p>
+              <p className="font-serif font-light text-[44px] leading-none text-rose-ink">{totalMoments}</p>
               <p className="mt-2 text-[12px] leading-relaxed text-muted">
                 {unconvertedMoments > 0
                   ? `${unconvertedMoments} ainda sem virar conteudo.`

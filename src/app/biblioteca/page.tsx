@@ -22,7 +22,7 @@ export default async function BibliotecaPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-serif text-[34px] leading-tight tracking-tight">
+        <h1 className="font-serif font-light text-[34px] leading-tight tracking-tight">
           Biblioteca
         </h1>
         <p className="mt-0.5 max-w-prose text-[13px] leading-relaxed text-muted">

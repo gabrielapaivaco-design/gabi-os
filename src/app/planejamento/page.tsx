@@ -80,7 +80,7 @@ export default async function PlanejamentoPage({
     <div>
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-[34px] leading-tight tracking-tight">
+          <h1 className="font-serif font-light text-[34px] leading-tight tracking-tight">
             Planejamento do mes
           </h1>
           <p className="mt-0.5 text-[13px] capitalize text-muted">

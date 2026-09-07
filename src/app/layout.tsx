@@ -1,26 +1,30 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, Karla } from "next/font/google";
+import { Public_Sans, Spectral } from "next/font/google";
 import "./globals.css";
 
-// Karla no corpo, Instrument Serif nos titulos. `display: swap` para o texto
+// Public Sans no corpo, Spectral nos titulos. `display: swap` para o texto
 // aparecer na fonte de sistema enquanto a real carrega, em vez de piscar vazio.
 //
-// A Instrument Serif so existe em um peso (400) — nao ha `font-light` nela. Foi
-// por isso que os titulos do sistema todo sairam de font-light: pedir 300 numa
-// fonte que nao tem 300 faz o navegador sintetizar um afinamento, e o resultado
-// e um desenho pior do que o proprio peso normal.
-const karla = Karla({
+// A Spectral e uma serif de TEXTO, e essa e a razao de estar aqui. A Instrument
+// Serif, que ficou no ar por um dia, e de display: contraste altissimo entre o
+// traco grosso e o fino. Num titulo grande e solto ela brilha; mas no sistema a
+// serif tambem aparece a 17, 19, 21 e 23px — o seletor de marca, os subtitulos
+// dos cartoes — e nesses tamanhos o traco fino simplesmente some. Era uma fonte
+// de cartaz fazendo trabalho de texto.
+//
+// Os cinco pesos da Spectral tambem devolvem o `font-light` aos titulos
+// grandes, que a Instrument (peso unico) tinha obrigado a remover.
+const publicSans = Public_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-karla",
+  variable: "--font-public-sans",
   display: "swap",
 });
 
-const instrumentSerif = Instrument_Serif({
+const spectral = Spectral({
   subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
-  variable: "--font-instrument-serif",
+  weight: ["300", "400", "500"],
+  variable: "--font-spectral",
   display: "swap",
 });
 import { headers } from "next/headers";
@@ -54,7 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="pt-BR" className={`${karla.variable} ${instrumentSerif.variable}`}>
+    <html lang="pt-BR" className={`${publicSans.variable} ${spectral.variable}`}>
       <body className="font-sans">
         {userEmail !== null ? (
           <div className="flex min-h-screen">

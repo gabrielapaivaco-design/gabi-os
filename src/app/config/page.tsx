@@ -57,7 +57,7 @@ export default async function ConfigPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-serif text-[34px] leading-tight tracking-tight">Configuracoes</h1>
+        <h1 className="font-serif font-light text-[34px] leading-tight tracking-tight">Configuracoes</h1>
         <p className="mt-0.5 text-[13px] text-muted">
           O workspace ativo e o que ele isola.
         </p>

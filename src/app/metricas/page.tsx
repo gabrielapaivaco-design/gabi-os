@@ -52,7 +52,7 @@ export default async function MetricasPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-serif text-[34px] leading-tight tracking-tight">Metricas</h1>
+        <h1 className="font-serif font-light text-[34px] leading-tight tracking-tight">Metricas</h1>
         <p className="mt-0.5 text-[13px] leading-relaxed text-muted">
           O que aconteceu depois de publicar. Numeros importados da plataforma, sem estimativa e
           sem preenchimento: o que nao foi coletado aparece em branco.
@@ -193,7 +193,10 @@ function Numero({
     <div>
       <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-faint">{rotulo}</p>
       <p
-        className={`mt-1 font-serif leading-none ${
+        // 38 e 30px estao acima do piso de 28 a partir do qual o peso 300 da
+        // Spectral segura o desenho; abaixo dele a haste fica fina demais sobre
+        // o papel quente.
+        className={`mt-1 font-serif font-light leading-none ${
           destaque ? "text-[38px] text-rose-ink" : "text-[30px] text-ink"
         }`}
       >
