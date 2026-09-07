@@ -60,7 +60,7 @@ export function MonthRollover({
 
   return (
     <section className="rounded-card border border-rose/30 bg-surface p-5">
-      <h2 className="font-serif text-[21px] font-light leading-tight text-ink">
+      <h2 className="font-serif text-[21px] leading-tight text-ink">
         Sobrou coisa de {mesAnterior}
       </h2>
       <p className="mt-1 text-[13px] leading-relaxed text-muted">

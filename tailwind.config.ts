@@ -26,10 +26,19 @@ const config: Config = {
           tint: "#F3E1E3",       // fundo suave
           ink: "#8E4753",        // texto sobre tint
         },
+        // Sete status, uma receita so: OKLCH com luminosidade 0,55 e saturacao
+        // 0,10, girando apenas o matiz.
+        //
+        // As anteriores tinham sido escolhidas uma a uma, em momentos
+        // diferentes. Cada uma funcionava sozinha, mas o contraste delas contra
+        // o papel ia de 2,7 a 3,6 — quase o dobro entre a mais fraca e a mais
+        // forte, entao uma pulava da tela e outra sumia. Era isso que soava
+        // desafinado. Agora todas ficam entre 4,0 e 4,5, o que de quebra as
+        // coloca acima do minimo de acessibilidade que as antigas nao atingiam.
         status: {
-          ideia: "#888780", roteiro: "#378ADD", gravar: "#BA7517",
-          editar: "#7F77DD", agendar: "#1D9E75", publicado: "#639922",
-          analisar: "#D4537E",
+          ideia: "#7A6E60", roteiro: "#3179A6", gravar: "#9E6033",
+          editar: "#7F62A0", agendar: "#428252", publicado: "#6A7A31",
+          analisar: "#9A587F",
         },
         // Tokens semanticos para shadcn/ui, mapeados sobre a identidade acima
         // (nao substituem nem redefinem nenhuma cor congelada).
@@ -46,13 +55,17 @@ const config: Config = {
         ring: "#A85C68",
       },
       fontFamily: {
-        sans: ["var(--font-work-sans)", "system-ui", "sans-serif"],
+        sans: ["var(--font-karla)", "system-ui", "sans-serif"],
         // Serif editorial: titulos de tela, o briefing e os numeros das metas.
         // E o que da carater — o resto do sistema continua em sans.
-        serif: ["var(--font-newsreader)", "Georgia", "serif"],
+        //
+        // A Instrument Serif tem contraste alto entre traco grosso e fino: e o
+        // que da a ela cara de revista em corpo grande. Pelo mesmo motivo ela
+        // nao serve para texto pequeno — abaixo de ~20px o traco fino some.
+        serif: ["var(--font-instrument-serif)", "Georgia", "serif"],
       },
       borderRadius: { card: "18px", control: "11px" },
-      maxWidth: { content: "1040px" },
+      maxWidth: { content: "1280px" },
       transitionTimingFunction: { premium: "cubic-bezier(0.16, 1, 0.3, 1)" },
     },
   },

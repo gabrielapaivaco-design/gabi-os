@@ -52,7 +52,7 @@ export default async function MetricasPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-serif text-[34px] font-light leading-tight tracking-tight">Metricas</h1>
+        <h1 className="font-serif text-[34px] leading-tight tracking-tight">Metricas</h1>
         <p className="mt-0.5 text-[13px] leading-relaxed text-muted">
           O que aconteceu depois de publicar. Numeros importados da plataforma, sem estimativa e
           sem preenchimento: o que nao foi coletado aparece em branco.
@@ -93,7 +93,7 @@ function ErroDeCarga({ erro }: { erro: string }) {
 function SemDados() {
   return (
     <section className="rounded-card bg-surface p-6">
-      <h2 className="font-serif text-[21px] font-light leading-tight text-ink">
+      <h2 className="font-serif text-[21px] leading-tight text-ink">
         Nenhum post importado ainda
       </h2>
       <p className="mt-2 max-w-prose text-[13px] leading-relaxed text-muted">
@@ -193,7 +193,7 @@ function Numero({
     <div>
       <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-faint">{rotulo}</p>
       <p
-        className={`mt-1 font-serif font-light leading-none ${
+        className={`mt-1 font-serif leading-none ${
           destaque ? "text-[38px] text-rose-ink" : "text-[30px] text-ink"
         }`}
       >

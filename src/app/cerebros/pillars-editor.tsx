@@ -33,7 +33,7 @@ export function PillarsEditor({ pillars }: { pillars: Pillar[] }) {
 
   return (
     <section className="rounded-card bg-surface p-5">
-      <h2 className="font-serif text-[21px] font-light leading-tight text-ink">Pilares</h2>
+      <h2 className="font-serif text-[21px] leading-tight text-ink">Pilares</h2>
       <p className="mt-1 max-w-prose text-[13px] leading-relaxed text-muted">
         Os assuntos recorrentes da marca. Sao o que permite ao Diretor sair de{" "}
         <em>&ldquo;Reel funciona&rdquo;</em> e chegar em{" "}

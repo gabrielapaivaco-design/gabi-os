@@ -21,16 +21,26 @@ export const STATUS_COLOR: Record<ContentStatus, string> = {
 // Nem todo nome e uma keyword CSS valida (ex.: "rose", "amber" nao sao), entao
 // mapeamos para hex — reaproveitando a paleta ja usada em STATUS_COLOR onde faz
 // sentido, para manter consistencia visual.
+// Mesma familia dos status (ver tailwind.config.ts): OKLCH com luminosidade
+// 0,55 e saturacao 0,10, girando so o matiz. Nove nomes, nove matizes.
+//
+// Os nomes ficaram como estavam de proposito — o banco guarda "amber" e "rose"
+// nas linhas de `pillars`, e renomear exigiria migration para nada. O que mudou
+// e so o hex de cada um.
+//
+// O teal ficou de fora da familia: no matiz dele essa combinacao de luz e
+// saturacao cai fora do que o sRGB alcanca, e forcar produziria uma cor mais
+// apagada que as vizinhas. Virou um verde-azulado dentro do gamut.
 const PILLAR_COLOR_NAMES: Record<string, string> = {
-  gray: "#888780",
-  blue: "#378ADD",
-  amber: "#BA7517",
-  purple: "#7F77DD",
-  teal: "#1D9E75",
-  green: "#639922",
-  pink: "#D4537E",
-  rose: "#B76E79",
-  coral: "#C97B63",
+  gray: "#7A6E60",
+  blue: "#3179A6",
+  amber: "#8C6C1F",
+  purple: "#7F62A0",
+  teal: "#2A8079",
+  green: "#428252",
+  pink: "#9A587F",
+  rose: "#A45953",
+  coral: "#9E6033",
 };
 
 // As cores que a tela de pilares oferece. Derivada do mapa acima em vez de
@@ -43,3 +53,19 @@ export function resolvePillarColor(color: string): string {
   if (color.startsWith("#")) return color;
   return PILLAR_COLOR_NAMES[color] ?? PILLAR_COLOR_NAMES.gray;
 }
+
+// A mesma cor, transparente, para tingir o fundo de um cartao.
+//
+// Derivada da cor de tinta em vez de ser uma segunda paleta: um tom de fundo
+// escolhido a parte inevitavelmente desafina do tom da frente com o tempo,
+// porque os dois passam a ser mantidos separados.
+export function tintColor(hex: string, alpha: number): string {
+  const n = Number.parseInt(hex.slice(1), 16);
+  if (Number.isNaN(n)) return "transparent";
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+// A dose de cor dos cartoes, escolhida na tela de direcoes: "media".
+// Um lugar so, para poder subir ou descer sem cacar valor espalhado.
+export const TINT_FUNDO = 0.11;
+export const TINT_BORDA = 0.26;

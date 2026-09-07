@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
-import { Newsreader, Work_Sans } from "next/font/google";
+import { Instrument_Serif, Karla } from "next/font/google";
 import "./globals.css";
 
-// Work Sans no corpo, Newsreader nos titulos. `display: swap` para o texto
+// Karla no corpo, Instrument Serif nos titulos. `display: swap` para o texto
 // aparecer na fonte de sistema enquanto a real carrega, em vez de piscar vazio.
-const workSans = Work_Sans({
+//
+// A Instrument Serif so existe em um peso (400) — nao ha `font-light` nela. Foi
+// por isso que os titulos do sistema todo sairam de font-light: pedir 300 numa
+// fonte que nao tem 300 faz o navegador sintetizar um afinamento, e o resultado
+// e um desenho pior do que o proprio peso normal.
+const karla = Karla({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-work-sans",
+  variable: "--font-karla",
   display: "swap",
 });
 
-const newsreader = Newsreader({
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
-  variable: "--font-newsreader",
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
   display: "swap",
 });
 import { headers } from "next/headers";
@@ -48,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="pt-BR" className={`${workSans.variable} ${newsreader.variable}`}>
+    <html lang="pt-BR" className={`${karla.variable} ${instrumentSerif.variable}`}>
       <body className="font-sans">
         {userEmail !== null ? (
           <div className="flex min-h-screen">
