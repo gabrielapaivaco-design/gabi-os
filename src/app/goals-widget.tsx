@@ -31,6 +31,7 @@ export function GoalsWidget({
   aiConfigured?: boolean;
 }) {
   const [goals, setGoals] = useState(initialGoals);
+  const [todas, setTodas] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -67,16 +68,28 @@ export function GoalsWidget({
     });
   }
 
+  // Onze metas, cada uma uma frase inteira, ocupavam metade da tela Hoje e
+  // pareciam planilha. O painel mostra quatro; o resto fica a um clique.
+  const visiveis = todas ? goals : goals.slice(0, 4);
+  const escondidas = goals.length - visiveis.length;
+
   return (
     <section className="rounded-card border border-line bg-surface p-4">
-      <h2 className="mb-3 text-[12px] font-medium uppercase tracking-wide text-faint">
-        Metas do trimestre ({quarter})
-      </h2>
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 className="text-[12px] font-medium uppercase tracking-wide text-faint">
+          Metas do trimestre ({quarter})
+        </h2>
+        {goals.length > 0 && (
+          <span className="shrink-0 text-[12px] tabular-nums text-faint">
+            {goals.filter((g) => g.progress > 0).length} de {goals.length} em andamento
+          </span>
+        )}
+      </div>
 
       {goals.length === 0 && <p className="mb-3 text-[13px] text-muted">Nenhuma meta ainda.</p>}
 
       <ul className="flex flex-col gap-2.5">
-        {goals.map((goal) => {
+        {visiveis.map((goal) => {
           const pct = goal.target ? Math.min((goal.progress / goal.target) * 100, 100) : null;
           return (
             <li key={goal.id}>
@@ -89,8 +102,11 @@ export function GoalsWidget({
                 />
               ) : (
                 <div className="flex items-center gap-3">
+                  {/* `title` porque o texto corta: as metas geradas pela IA sao
+                      frases inteiras, e sem isso a parte cortada some de vez. */}
                   <button
                     onClick={() => setEditingId(goal.id)}
+                    title={goal.title}
                     className="flex-1 truncate text-left text-[13px] text-ink transition-colors hover:text-rose-ink"
                   >
                     {goal.title}
@@ -118,31 +134,47 @@ export function GoalsWidget({
         })}
       </ul>
 
-      <form action={handleCreate} className="mt-3 flex items-center gap-2">
-        <input type="hidden" name="quarter" value={quarter} />
-        <input name="title" placeholder="+ Nova meta" aria-label="Titulo da meta" className={`flex-1 ${inputClass}`} />
-        <input
-          name="target"
-          type="number"
-          placeholder="alvo"
-          aria-label="Valor alvo (opcional)"
-          className={`w-20 ${inputClass}`}
-        />
+      {escondidas > 0 && (
         <button
-          type="submit"
-          className="rounded-control bg-ink px-3 py-1.5 text-[12px] font-medium text-white transition-transform duration-150 ease-premium active:scale-[0.98]"
+          onClick={() => setTodas(true)}
+          className="mt-3 text-[12px] text-rose-ink underline underline-offset-2"
         >
-          Adicionar
+          ver as outras {escondidas}
         </button>
-      </form>
+      )}
+
+      {/* Criar meta e sugerir com a IA so aparecem com a lista aberta. Sao
+          acoes de sentar e planejar o trimestre, nao de bater o olho no
+          painel — e era a soma delas que fazia este cartao ocupar meia tela. */}
+      {(todas || goals.length === 0) && (
+        <>
+          <form action={handleCreate} className="mt-3 flex items-center gap-2">
+            <input type="hidden" name="quarter" value={quarter} />
+            <input name="title" placeholder="+ Nova meta" aria-label="Titulo da meta" className={`flex-1 ${inputClass}`} />
+            <input
+              name="target"
+              type="number"
+              placeholder="alvo"
+              aria-label="Valor alvo (opcional)"
+              className={`w-20 ${inputClass}`}
+            />
+            <button
+              type="submit"
+              className="rounded-control bg-ink px-3 py-1.5 text-[12px] font-medium text-white transition-transform duration-150 ease-premium active:scale-[0.98]"
+            >
+              Adicionar
+            </button>
+          </form>
+
+          <GoalsSuggest existingTitles={goals.map((g) => g.title)} aiConfigured={aiConfigured} />
+        </>
+      )}
 
       {error && (
         <p className="mt-2 rounded-control border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-[12px] text-destructive">
           {error}
         </p>
       )}
-
-      <GoalsSuggest existingTitles={goals.map((g) => g.title)} aiConfigured={aiConfigured} />
     </section>
   );
 }

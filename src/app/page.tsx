@@ -186,6 +186,11 @@ async function loadHoje(): Promise<HojeData> {
   }
 }
 
+// Teto de itens por fila. Doze linhas num painel deixam de ser painel e viram
+// lista: o cartao estica, desequilibra a linha inteira da grade, e mesmo assim
+// ninguem le do sexto em diante. O Pipeline e o lugar da lista completa.
+const TETO_DA_FILA = 5;
+
 function Fila({
   titulo,
   status,
@@ -197,6 +202,8 @@ function Fila({
 }) {
   if (items.length === 0) return null;
   const cor = STATUS_COLOR[status];
+  const visiveis = items.slice(0, TETO_DA_FILA);
+  const restantes = items.length - visiveis.length;
 
   return (
     <Tile cor={cor}>
@@ -204,7 +211,7 @@ function Fila({
         {titulo}
       </TileLabel>
       <ul className="flex flex-col gap-1.5">
-        {items.map((item) => (
+        {visiveis.map((item) => (
           <li key={item.id}>
             <Link
               href={`/pipeline?open=${item.id}`}
@@ -226,6 +233,14 @@ function Fila({
           </li>
         ))}
       </ul>
+      {restantes > 0 && (
+        <Link
+          href="/pipeline"
+          className="mt-2.5 inline-block text-[12px] text-muted underline underline-offset-2 transition-colors hover:text-ink"
+        >
+          e mais {restantes} no Pipeline
+        </Link>
+      )}
     </Tile>
   );
 }
@@ -330,7 +345,11 @@ export default async function HojePage() {
 
           {/* O numero da conta, quando ha o que contar. */}
           {alcance ? (
-            <Tile>
+            /* O numero e a comparacao por formato moram no mesmo modulo. Ficavam
+               em dois, e o de cima sobrava metade da altura em branco ao lado do
+               modulo de Story, que e alto. Juntos, os dois lados da linha
+               fecham na mesma altura. */
+            <Tile className="flex flex-col">
               <TileLabel>Alcance tipico</TileLabel>
               <p className="font-serif font-light text-[44px] leading-none text-rose-ink">
                 {Math.round(alcance.mediana).toLocaleString("pt-BR")}
@@ -341,9 +360,38 @@ export default async function HojePage() {
                   <> A media, {Math.round(alcance.media).toLocaleString("pt-BR")}, e puxada por poucos picos.</>
                 )}
               </p>
+
+              {leitura && leitura.porFormato.length > 1 && (
+                <ul className="mt-4 flex flex-col gap-2.5 border-t border-line pt-4">
+                  {leitura.porFormato.slice(0, 3).map((f) => {
+                    const teto = leitura.porFormato[0].medianaAlcance ?? 1;
+                    return (
+                      <li key={f.formato}>
+                        <div className="mb-1 flex items-baseline justify-between gap-3 text-[12.5px]">
+                          <span className="text-ink">
+                            {f.formato} <span className="text-faint">{f.posts}</span>
+                          </span>
+                          <span className="shrink-0 tabular-nums text-muted">
+                            {f.medianaAlcance === null
+                              ? "—"
+                              : Math.round(f.medianaAlcance).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-canvas">
+                          <div
+                            className="h-full rounded-full bg-rose"
+                            style={{ width: `${((f.medianaAlcance ?? 0) / teto) * 100}%` }}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
               <Link
                 href="/metricas"
-                className="mt-3 inline-block text-[12px] text-rose-ink underline underline-offset-2"
+                className="mt-auto pt-4 text-[12px] text-rose-ink underline underline-offset-2"
               >
                 Ver metricas
               </Link>
@@ -370,38 +418,6 @@ export default async function HojePage() {
             <GoalsWidget goals={goals} quarter={currentQuarter()} aiConfigured={isAiConfigured()} />
           </div>
 
-          {/* Formato so aparece quando ha mais de um para comparar: um formato
-              sozinho nao e comparacao, e uma barra sozinha nao ensina nada. */}
-          {leitura && leitura.porFormato.length > 1 && (
-            <Tile>
-              <TileLabel>Por formato</TileLabel>
-              <ul className="flex flex-col gap-2.5">
-                {leitura.porFormato.slice(0, 4).map((f) => {
-                  const teto = leitura.porFormato[0].medianaAlcance ?? 1;
-                  return (
-                    <li key={f.formato}>
-                      <div className="mb-1 flex items-baseline justify-between gap-3 text-[12.5px]">
-                        <span className="text-ink">
-                          {f.formato} <span className="text-faint">{f.posts}</span>
-                        </span>
-                        <span className="shrink-0 tabular-nums text-muted">
-                          {f.medianaAlcance === null
-                            ? "—"
-                            : Math.round(f.medianaAlcance).toLocaleString("pt-BR")}
-                        </span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-canvas">
-                        <div
-                          className="h-full rounded-full bg-rose"
-                          style={{ width: `${((f.medianaAlcance ?? 0) / teto) * 100}%` }}
-                        />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Tile>
-          )}
         </div>
       )}
 
