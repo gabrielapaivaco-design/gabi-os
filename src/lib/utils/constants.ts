@@ -65,7 +65,10 @@ export function tintColor(hex: string, alpha: number): string {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
-// A dose de cor dos cartoes, escolhida na tela de direcoes: "media".
-// Um lugar so, para poder subir ou descer sem cacar valor espalhado.
-export const TINT_FUNDO = 0.11;
-export const TINT_BORDA = 0.26;
+// A dose de cor dos cartoes. Comecou em 11%, que era o valor "medio" da tela de
+// direcoes — e na tela real 11% sobre bege nao le como cor, le como um bege
+// levemente diferente. Subiu para 20% no fundo e 45% na borda: a borda e o que
+// realmente marca o cartao, porque e cor cheia contra o papel em vez de cor
+// diluida nele.
+export const TINT_FUNDO = 0.2;
+export const TINT_BORDA = 0.45;

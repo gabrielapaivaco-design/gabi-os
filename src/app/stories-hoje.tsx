@@ -17,24 +17,29 @@ export function StoriesHoje({ dia, hoje }: { dia: StoriesDay | null; hoje: Weekd
   if (!dia) return null;
 
   return (
-    <Tile cor="#A85C68" span>
-      <div className="mb-2 flex items-baseline justify-between gap-4">
-        <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-rose-ink">
+    // Invertido: e o unico bloco escuro do conteudo, e por isso e o primeiro
+    // lugar onde o olho pousa. Antes ele era um creme levemente rosado entre
+    // outros cremes, e nao ganhava do resto por nada.
+    <section className="rounded-card bg-hero p-6 sm:col-span-2">
+      <div className="mb-3 flex items-baseline justify-between gap-4">
+        <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-hero-rose">
           Story de hoje · {WEEKDAY_LABEL[hoje]}
         </h2>
         <Link
           href="/planejamento"
-          className="flex shrink-0 items-center gap-1 text-[11px] text-faint transition-colors hover:text-ink"
+          className="flex shrink-0 items-center gap-1 text-[11px] text-hero-muted/70 transition-colors hover:text-hero-ink"
         >
           <CalendarRange size={11} /> a semana toda
         </Link>
       </div>
 
-      <p className="max-w-[46ch] font-serif font-light text-[28px] leading-[1.25] text-ink">{dia.theme}</p>
+      <p className="max-w-[44ch] font-serif font-light text-[30px] leading-[1.24] text-hero-ink">
+        {dia.theme}
+      </p>
 
       {dia.why && (
-        <p className="mt-2.5 max-w-prose text-[12.5px] leading-relaxed text-muted">{dia.why}</p>
+        <p className="mt-3 max-w-prose text-[12.5px] leading-relaxed text-hero-muted">{dia.why}</p>
       )}
-    </Tile>
+    </section>
   );
 }

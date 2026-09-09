@@ -115,21 +115,26 @@ export function WorkspaceSwitcher({
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex w-full items-center gap-2.5 rounded-card bg-surface px-3.5 py-3 text-left transition-opacity hover:opacity-80"
+        // Um cartao claro dentro da barra escura seria a unica coisa acesa ali,
+        // e roubaria o olho da navegacao. Aqui ele e so um vinco na propria
+        // barra: uma borda tenue e o nome da marca em serif clara.
+        className="flex w-full items-center gap-2.5 rounded-card border border-white/[0.09] bg-white/[0.04] px-3.5 py-3 text-left transition-colors hover:bg-white/[0.08]"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-[10px] uppercase tracking-[0.13em] text-faint">
+          <span className="block text-[10px] uppercase tracking-[0.13em] text-shell-faint">
             {vazio ? "nenhuma marca" : "marca ativa"}
           </span>
           <span
             className={`block truncate pt-0.5 ${
-              vazio ? "text-[14px] text-muted" : "font-serif text-[19px] tracking-tight text-ink"
+              vazio
+                ? "text-[14px] text-shell-muted"
+                : "font-serif text-[19px] tracking-tight text-shell-ink"
             }`}
           >
             {vazio ? "Criar workspace" : (active?.name ?? "Workspace")}
           </span>
         </span>
-        <ChevronsUpDown size={13} className="shrink-0 text-faint" />
+        <ChevronsUpDown size={13} className="shrink-0 text-shell-faint" />
       </button>
 
       {open && (

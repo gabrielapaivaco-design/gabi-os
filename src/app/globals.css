@@ -14,6 +14,28 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Grao de papel. Um bege liso nao le como papel, le como bege — e era parte do
+   motivo de a tela parecer sem graca por mais afinada que estivesse a paleta.
+   Ruido gerado por SVG embutido: nenhuma requisicao, alguns bytes, e a
+   opacidade de 3,5% deixa o efeito no limite do perceptivel, que e onde
+   textura funciona. `fixed` para o grao nao deslizar junto com a rolagem, o
+   que denunciaria o truque. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* O conteudo sobe acima do grao. Sem isto o ruido cobriria a interface toda. */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* Foco acessivel, na cor de identidade. */
 :focus-visible {
   outline: 2px solid #A85C68;

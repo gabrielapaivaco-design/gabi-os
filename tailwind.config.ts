@@ -21,6 +21,25 @@ const config: Config = {
         muted: "#71634F",        // texto secundario
         faint: "#A89684",        // dicas
         line: "#E4D9C9",         // bordas
+
+        // A parte escura. Ela existe porque a tela inteira era creme sobre
+        // creme: sem nenhuma massa escura, um layout fica lavado por mais
+        // afinada que a paleta clara esteja. Sao dois escuros diferentes de
+        // proposito — a barra e neutra e o cartao de hoje puxa para o vinho,
+        // entao um nao vira sombra do outro.
+        shell: {
+          DEFAULT: "#241E18",    // barra lateral
+          ink: "#EFE6D9",        // texto ativo sobre ela      13,3:1
+          muted: "#B3A493",      // texto inativo               6,8:1
+          faint: "#8E7E6C",      // rodape                      4,2:1
+          rose: "#D08C93",       // icone da tela ativa         6,2:1
+        },
+        hero: {
+          DEFAULT: "#33272A",    // cartao do dia, invertido
+          ink: "#F5EEE4",        // titulo serif               12,5:1
+          muted: "#D6C6BC",      // texto de apoio              8,7:1
+          rose: "#E0A7AD",       // versalete
+        },
         rose: {
           DEFAULT: "#A85C68",    // rose de identidade, aprofundado
           tint: "#F3E1E3",       // fundo suave
