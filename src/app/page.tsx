@@ -168,6 +168,18 @@ async function loadHoje(): Promise<HojeData> {
     // quando o problema era outro. Erro sem causa visivel custa mais caro que
     // erro feio.
     const causa = err instanceof Error ? err.message : String(err);
+
+    // Durante o build o Next tenta renderizar esta rota estaticamente para
+    // descobrir se ela pode ser estatica. Como `getWorkspaceId` le cookie, ela
+    // nao pode — e o Next sinaliza isso lancando aqui dentro. Nao e falha: e a
+    // resposta da pergunta que ele foi fazer. Registrar como erro fazia todo
+    // build terminar com uma mensagem vermelha, e ruido assim esconde erro de
+    // verdade. Continua subindo, para o Next marcar a rota como dinamica.
+    //
+    // O sinal e o `digest`, e nao o nome da classe: a classe e interna do Next
+    // e o nome dela nao sobrevive ao empacotamento.
+    if ((err as { digest?: string })?.digest === "DYNAMIC_SERVER_USAGE") throw err;
+
     console.error("[hoje] falha ao carregar:", causa);
 
     return {

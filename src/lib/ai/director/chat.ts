@@ -4,6 +4,10 @@ import { emit } from "@/lib/events/bus";
 import { getWorkspaceId } from "@/lib/workspace/current";
 import { buildContentContext, renderContextForPrompt } from "./context";
 import { DIRECTOR_SYSTEM } from "./prompts";
+import { CAMPOS_EDITAVEIS, lerEdits, type CardEdits } from "./card-edits";
+
+// Reexportados para nao quebrar quem ja importava daqui.
+export { CAMPO_LABEL, CAMPOS_EDITAVEIS, type CardEdits } from "./card-edits";
 
 // Conversa com o Diretor.
 //
@@ -12,8 +16,9 @@ import { DIRECTOR_SYSTEM } from "./prompts";
 // servem quando a IA entendeu literal demais e voce precisa dizer "mais leve",
 // "corta a parte do meio", "e se comecasse pelo fim?".
 //
-// Por isso aqui NAO ha jsonSchema: a resposta e texto livre, como uma pessoa
-// responderia. O historico inteiro vai junto a cada turno, entao o Diretor
+// A resposta tem duas partes: o texto que ela le, escrito como uma pessoa
+// responderia, e — quando ela pediu uma alteracao — os campos do card ja
+// reescritos. O historico inteiro vai junto a cada turno, entao o Diretor
 // lembra do que voce corrigiu tres mensagens atras.
 
 // Instrucoes que valem so na conversa. O DIRECTOR_SYSTEM continua definindo a
@@ -27,7 +32,46 @@ Na conversa:
 - Quando ela te corrigir, acate de verdade — nao repita a mesma ideia com outras palavras. Se ela disse "mais leve", fica mais leve mesmo.
 - Interprete a intencao, nao so a letra do que foi dito. "Ficou meio quadrado" nao pede sinonimos, pede outro ritmo.
 - Pode discordar quando tiver motivo, mas em uma frase, e proponha a alternativa em vez de so apontar o problema.
-- Quando ela pedir um texto pronto (roteiro, legenda, hook), devolva so o texto, sem explicar o que voce fez antes ou depois.`;
+
+# Como voce altera o conteudo
+
+Voce tem duas saidas: \`reply\`, que e o que ela le, e \`edits\`, que sao os campos do card.
+
+Quando ela pedir uma MUDANCA em algum campo — "muda o hook", "deixa a legenda mais curta", "reescreve o roteiro comecando pelo fim", "troca o titulo" — escreva o texto novo em \`edits\`, no campo certo, JA PRONTO para entrar no card.
+
+Nesse caso a \`reply\` fica curtissima: uma frase dizendo o que voce mudou e por que. NAO repita o texto novo dentro da reply — ela ja vai ver o texto na proposta, e ler duas vezes a mesma coisa e pior do que ler uma.
+
+Preencha SOMENTE os campos que mudam. Todo campo que voce nao esta alterando fica null — inclusive os que ela nao mencionou.
+
+Quando ela so pergunta, opina ou pede ideia sem pedir alteracao, todos os campos de \`edits\` ficam null e a conversa segue normal na \`reply\`.
+
+Escreva no campo o texto FINAL, do jeito que vai para o Instagram: sem aspas em volta, sem "Hook:" na frente, sem comentario seu no meio.`;
+
+const CHAT_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["reply", "edits"],
+  properties: {
+    reply: {
+      type: "string",
+      description:
+        "O que ela le. Curto. Quando houver edits, uma frase dizendo o que mudou — sem repetir o texto novo.",
+    },
+    edits: {
+      type: "object",
+      additionalProperties: false,
+      required: ["title", "hook", "script", "caption", "cta"],
+      description: "Campos do card. null em tudo que nao muda nesta resposta.",
+      properties: {
+        title: { type: ["string", "null"] },
+        hook: { type: ["string", "null"] },
+        script: { type: ["string", "null"] },
+        caption: { type: ["string", "null"] },
+        cta: { type: ["string", "null"] },
+      },
+    },
+  },
+};
 
 export interface DirectorChatTurn {
   role: "user" | "assistant";
@@ -36,6 +80,8 @@ export interface DirectorChatTurn {
 
 export interface DirectorChatReply {
   text: string;
+  // Nulo quando a resposta nao propoe nenhuma alteracao.
+  edits: CardEdits | null;
 }
 
 export async function chatWithDirector(
@@ -63,34 +109,45 @@ export async function chatWithDirector(
   );
 
   let text: string;
+  let edits: CardEdits | null = null;
   try {
     const result = await provider.generate({
       system: CHAT_SYSTEM,
       messages,
-      // Conversa pede resposta rapida; o esforco alto fica para as tarefas
-      // estruturadas, onde a qualidade do texto final importa mais que o tempo.
+      jsonSchema: CHAT_SCHEMA,
+      // Esforco medio: numa conversa ela corrige na mensagem seguinte, e a
+      // ida e volta rapida vale mais que a ultima gota de qualidade.
       effort: "medium",
-      // Pelo mesmo motivo: numa conversa ela corrige na mensagem seguinte, e
-      // muitas idas e voltas curtas sao onde o modelo caro pesa sem aparecer.
-      tier: "efficient",
+      // Uma excecao ao "conversa e barata": quando a conversa passa a escrever
+      // o roteiro que vai ao ar, ela deixou de ser conversa. O texto final
+      // merece o modelo bom, como merece nas outras tarefas de produto.
+      tier: "best",
       maxTokens: 8000,
     });
-    text = result.text.trim();
+
+    const parsed = (result.parsed ?? {}) as Record<string, unknown>;
+    text = String(parsed.reply ?? "").trim();
+    edits = lerEdits(parsed.edits);
 
     await logChat(db, contentId, provider.name, result.model, {
       usage: result.usage,
       turns: history.length,
       reply: text,
+      // Auditoria registra QUAIS campos foram propostos, nao o conteudo deles:
+      // o texto ja vive no card, e duplicar aqui so incharia o historico.
+      camposPropostos: edits ? CAMPOS_EDITAVEIS.filter((c) => edits?.[c]) : [],
     });
   } catch (err) {
-    await logChat(db, contentId, provider.name, provider.modelFor("efficient"), {
+    await logChat(db, contentId, provider.name, provider.modelFor("best"), {
       turns: history.length,
       error: err instanceof Error ? err.message : "Erro desconhecido.",
     });
     throw err;
   }
 
-  if (!text) {
+  // Resposta vazia so e falha quando nao veio proposta junto: se o Diretor
+  // reescreveu o roteiro e economizou nas palavras, a entrega existe.
+  if (!text && !edits) {
     throw new Error("O Diretor devolveu uma resposta vazia.");
   }
 
@@ -100,7 +157,7 @@ export async function chatWithDirector(
     payload: { content_id: contentId, task: "conversa" },
   });
 
-  return { text };
+  return { text, edits };
 }
 
 // Mesma auditoria das tarefas estruturadas: custo e historico por workspace.
@@ -114,6 +171,7 @@ async function logChat(
     usage?: { inputTokens: number; outputTokens: number };
     turns: number;
     reply?: string;
+    camposPropostos?: string[];
     error?: string;
   },
 ): Promise<void> {

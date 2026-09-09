@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { AiNotConfiguredError } from "@/lib/ai";
 import { runDirector, type DirectorOutput, type DirectorTask } from "@/lib/ai/director";
-import { chatWithDirector, type DirectorChatTurn } from "@/lib/ai/director/chat";
+import { chatWithDirector, type CardEdits, type DirectorChatTurn } from "@/lib/ai/director/chat";
 
 // Como nas demais Server Actions do app, o erro volta como dado em vez de ser
 // lancado: o Next.js redige mensagens de excecoes nao tratadas, e o painel
@@ -36,7 +36,7 @@ export async function runDirectorAction(
 }
 
 export type DirectorChatResult =
-  | { ok: true; reply: string }
+  | { ok: true; reply: string; edits: CardEdits | null }
   | { ok: false; error: string; notConfigured: boolean };
 
 export async function chatWithDirectorAction(
@@ -44,9 +44,9 @@ export async function chatWithDirectorAction(
   history: DirectorChatTurn[],
 ): Promise<DirectorChatResult> {
   try {
-    const { text } = await chatWithDirector(createClient(), contentId, history);
+    const { text, edits } = await chatWithDirector(createClient(), contentId, history);
     revalidatePath("/historico");
-    return { ok: true, reply: text };
+    return { ok: true, reply: text, edits };
   } catch (err) {
     if (err instanceof AiNotConfiguredError) {
       return { ok: false, error: err.message, notConfigured: true };

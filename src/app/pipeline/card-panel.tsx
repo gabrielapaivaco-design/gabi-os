@@ -291,7 +291,7 @@ export function CardPanel({
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[520px] flex-col border-l border-line bg-surface p-6 shadow-lg"
+        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[min(920px,94vw)] flex-col border-l border-line bg-surface p-6 shadow-lg sm:p-8"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-medium text-ink">Editar conteudo</h2>
@@ -420,7 +420,7 @@ export function CardPanel({
             <textarea
               value={hook}
               onChange={(e) => setHook(e.target.value)}
-              rows={3}
+              rows={4}
               className={proseInputClass}
             />
           </Field>
@@ -428,7 +428,7 @@ export function CardPanel({
             <textarea
               value={script}
               onChange={(e) => setScript(e.target.value)}
-              rows={10}
+              rows={18}
               className={proseInputClass}
             />
           </Field>
@@ -436,7 +436,7 @@ export function CardPanel({
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              rows={6}
+              rows={10}
               className={proseInputClass}
             />
           </Field>
@@ -444,7 +444,7 @@ export function CardPanel({
             <textarea
               value={cta}
               onChange={(e) => setCta(e.target.value)}
-              rows={2}
+              rows={3}
               className={proseInputClass}
             />
           </Field>
@@ -578,11 +578,22 @@ export function CardPanel({
             </>
           }
           atalhos={[
-            "Esse conteudo ficou literal demais. Como deixar mais leve?",
-            "Me da tres jeitos diferentes de abrir isso.",
+            "Reescreve o hook mais leve.",
+            "Deixa a legenda mais curta e termina com uma pergunta.",
+            "Refaz o roteiro comecando pelo fim.",
             "O que voce cortaria daqui, e por que?",
           ]}
           onEnviar={(history) => chatWithDirectorAction(card.id, history)}
+          // O Diretor agora escreve DENTRO do card. Antes ele so respondia no
+          // balao e ela copiava na mao — pedir "muda o hook" nao mudava o hook.
+          onAplicar={(edits) => {
+            if (edits.title) setTitle(edits.title);
+            if (edits.hook) setHook(edits.hook);
+            if (edits.script) setScript(edits.script);
+            if (edits.caption) setCaption(edits.caption);
+            if (edits.cta) setCta(edits.cta);
+            setAiDraft(true);
+          }}
           acaoMensagem={{
             label: "Usar como roteiro",
             onClick: (texto) => {
