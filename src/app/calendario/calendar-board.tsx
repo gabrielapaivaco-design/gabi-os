@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -40,8 +41,10 @@ const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
 function ContentChip({ content, compact = false }: { content: CalendarContent; compact?: boolean }) {
   return (
+    // A borda acende no hover: sem isso nada dizia que o chip abre alguma
+    // coisa, e um alvo clicavel que nao parece clicavel nao e descoberto.
     <div
-      className={`flex items-center gap-1.5 rounded-control border border-line bg-surface px-1.5 py-1 ${
+      className={`flex items-center gap-1.5 rounded-control border border-line bg-surface px-1.5 py-1 transition-colors group-hover:border-rose/50 ${
         compact ? "text-[10px]" : "text-[12px]"
       }`}
     >
@@ -58,22 +61,50 @@ function ContentChip({ content, compact = false }: { content: CalendarContent; c
   );
 }
 
+// Quanto o dedo pode escorregar e o gesto ainda contar como clique. E o mesmo
+// valor do `activationConstraint` do PointerSensor la embaixo: abaixo dele o
+// dnd-kit nem comeca a arrastar, entao os dois gestos nunca disputam o mesmo
+// movimento.
+const FOLGA_DO_CLIQUE = 4;
+
 function DraggableContent({ content, compact }: { content: CalendarContent; compact?: boolean }) {
+  const router = useRouter();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: content.id });
   // aria-describedby do dnd-kit vem de um contador global que diverge entre
   // servidor e cliente (warning de hidratacao). Removido; role/tabIndex ficam,
   // entao o acesso por teclado continua funcionando.
   const { "aria-describedby": _ignored, ...a11y } = attributes;
 
+  const inicio = useRef<{ x: number; y: number } | null>(null);
+
   return (
+    // O clique vive no envoltorio, e nao no mesmo elemento do dnd-kit: espalhar
+    // `listeners` sobrescreveria qualquer onPointerDown meu. Na captura o meu
+    // roda ANTES do dele, entao consigo anotar de onde o gesto partiu sem
+    // atrapalhar o arraste.
     <div
-      ref={setNodeRef}
-      {...a11y}
-      {...listeners}
-      style={{ opacity: isDragging ? 0.4 : 1 }}
-      className="cursor-grab active:cursor-grabbing"
+      onPointerDownCapture={(e) => {
+        inicio.current = { x: e.clientX, y: e.clientY };
+      }}
+      onClick={(e) => {
+        const p = inicio.current;
+        // Soltar depois de arrastar tambem dispara clique. Sem esta medida,
+        // reagendar um conteudo abriria o card dele no fim do gesto.
+        if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > FOLGA_DO_CLIQUE) return;
+        router.push(`/pipeline?open=${content.id}`);
+      }}
+      title={`${content.title} — abrir no Pipeline`}
+      className="group cursor-pointer"
     >
-      <ContentChip content={content} compact={compact} />
+      <div
+        ref={setNodeRef}
+        {...a11y}
+        {...listeners}
+        style={{ opacity: isDragging ? 0.4 : 1 }}
+        className="active:cursor-grabbing"
+      >
+        <ContentChip content={content} compact={compact} />
+      </div>
     </div>
   );
 }
