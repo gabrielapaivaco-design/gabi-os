@@ -5,6 +5,7 @@ import { getWorkspaceId } from "@/lib/workspace/current";
 import { dayKeyFromIso } from "@/lib/calendar/month";
 import type { ContentStatus } from "@/types/db";
 import { PipelineBoard, type ContentCardData, type PillarOption } from "./pipeline-board";
+import { ClassifyPillars } from "./classify-pillars";
 
 // Roteiro, legenda, analise e a conversa com o Diretor saem daqui. Ver a nota
 // em /planejamento sobre por que o valor mora na rota, e literal.
@@ -99,6 +100,12 @@ export default async function PipelinePage({
 }) {
   const { columns, pillars, unavailable } = await loadBoard();
 
+  // Derivado do que ja foi carregado para o quadro: o titulo e o pilar de cada
+  // card estao ali, entao contar os sem pilar nao custa consulta nenhuma.
+  const todos = Object.values(columns).flat();
+  const semPilar = todos.filter((c) => !c.pillarId);
+  const titulos = Object.fromEntries(todos.map((c) => [c.id, c.title]));
+
   return (
     <div>
       <header className="mb-6">
@@ -107,6 +114,15 @@ export default async function PipelinePage({
           Arraste os cards entre os status conforme o conteudo avanca.
         </p>
       </header>
+
+      {!unavailable && (
+        <ClassifyPillars
+          semPilar={semPilar.length}
+          pillars={pillars}
+          aiConfigured={isAiConfigured()}
+          titulos={titulos}
+        />
+      )}
 
       {unavailable && (
         <p className="mb-4 text-[13px] text-muted">
