@@ -2,3 +2,6 @@ node_modules
 .next
 .env
 .env*.local
+
+# Montagem local usada so para olhar uma tela antes de publicar.
+hoje.html
