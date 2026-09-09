@@ -9,6 +9,7 @@ import { archiveContentAction, updateContentAction } from "./actions";
 import { chatWithDirectorAction, runDirectorAction } from "./ai-actions";
 import { markPublishedAction } from "./publish-actions";
 import { scheduleContentAction } from "@/app/calendario/actions";
+import { FORMATO_LABEL, normalizarFormato, type Formato } from "@/lib/content/format";
 import type { ContentCardData, PillarOption } from "./pipeline-board";
 import { DirectorStudio, TASK_LABEL, type DirectorResult } from "./director-studio";
 import { DirectorChat } from "./director-chat";
@@ -370,13 +371,27 @@ export function CardPanel({
             <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
           </Field>
 
+          {/* Era um campo de texto livre, e o placeholder dele dizia "Reels" no
+              plural enquanto o planejador escrevia "Reel" no singular. O banco
+              acabou com o mesmo formato gravado de tres jeitos — "Reel",
+              "Reels", "Carrosel" — e a etiqueta no quadro fazia a mesma coisa
+              parecer duas. Uma lista fechada impede a proxima variacao; abrir e
+              salvar um card antigo converge o valor dele. */}
           <Field label="Formato">
-            <input
-              value={format}
-              onChange={(e) => setFormat(e.target.value)}
-              placeholder="Reels, Carrossel, Stories..."
+            <select
+              value={normalizarFormato(format) ?? ""}
+              onChange={(e) =>
+                setFormat(e.target.value ? FORMATO_LABEL[e.target.value as Formato] : "")
+              }
               className={inputClass}
-            />
+            >
+              <option value="">Sem formato</option>
+              {(Object.keys(FORMATO_LABEL) as Formato[]).map((f) => (
+                <option key={f} value={f}>
+                  {FORMATO_LABEL[f]}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <Field label="Objetivo">
