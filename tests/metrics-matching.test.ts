@@ -93,13 +93,25 @@ describe("sugerirVinculos", () => {
     expect(s[0].contentId).toBe("c2");
   });
 
-  it("usa publishedAt do conteudo na frente de plannedAt", () => {
-    // Planejado num dia e publicado noutro: vale quando saiu de verdade.
-    const s = sugerirVinculos(
+  it("qualquer uma das duas datas do conteudo pode fechar o par", () => {
+    // Planejado no dia 1, marcado como publicado no dia 12: o post do dia 12
+    // casa pela publicacao.
+    const s1 = sugerirVinculos(
       [conteudo("c1", { plannedAt: "2026-08-01T19:00:00Z", publishedAt: "2026-08-12T21:00:00Z" })],
       [post("p1")],
     );
-    expect(s[0]?.motivo).toContain("mesmo dia");
+    expect(s1[0]?.motivo).toContain("mesmo dia");
+
+    // O caso inverso aconteceu de verdade: o post saiu no dia planejado (10) e
+    // ela so clicou "publicado" no sistema quatro dias depois (14). A data de
+    // publicacao no banco e a do clique, nao a do post — e olhando so ela, o
+    // par mais obvio da tela ficava sem sugestao.
+    const s2 = sugerirVinculos(
+      [conteudo("c1", { plannedAt: "2026-09-10T19:00:00Z", publishedAt: "2026-09-14T15:00:00Z" })],
+      [post("p1", { publishedAt: "2026-09-10T20:18:00Z" })],
+    );
+    expect(s2).toHaveLength(1);
+    expect(s2[0].motivo).toContain("mesmo dia");
   });
 
   it("data ausente nao inventa proximidade", () => {

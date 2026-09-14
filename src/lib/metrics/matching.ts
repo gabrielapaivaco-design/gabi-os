@@ -69,19 +69,33 @@ function semelhanca(a: Set<string>, b: Set<string>): number {
   return comuns / Math.min(a.size, b.size);
 }
 
+function pontuarData(d: number): { score: number; nota: string } {
+  // A data e o sinal mais forte: publicar e um evento com hora marcada, e a
+  // pessoa raramente erra o dia em mais de um ou dois.
+  if (d === 0) return { score: 0.6, nota: "mesmo dia" };
+  if (d === 1) return { score: 0.4, nota: "um dia de diferenca" };
+  if (d <= 3) return { score: 0.2, nota: `${d} dias de diferenca` };
+  return { score: 0, nota: "" };
+}
+
 function pontuar(c: CandidatoConteudo, p: CandidatoPost): { score: number; motivo: string } {
-  const diaConteudo = diaDe(c.publishedAt ?? c.plannedAt);
   const diaPost = diaDe(p.publishedAt);
 
+  // As DUAS datas do conteudo concorrem, e vale a que chegar mais perto.
+  //
+  // `published_at` e a hora em que ela clicou "publicado" no sistema — e isso
+  // costuma acontecer dias depois de o post ir ao ar, numa sentada de
+  // organizar. Aconteceu de verdade: o post saiu no dia 10, que era a data
+  // planejada; ela marcou publicado no dia 14. Olhando so a publicacao, o par
+  // mais obvio da tela ficou sem sugestao.
   let porData = 0;
   let notaData = "";
-  if (diaConteudo && diaPost) {
-    const d = distanciaEmDias(diaConteudo, diaPost);
-    // A data e o sinal mais forte: publicar e um evento com hora marcada, e a
-    // pessoa raramente erra o dia em mais de um ou dois.
-    if (d === 0) [porData, notaData] = [0.6, "mesmo dia"];
-    else if (d === 1) [porData, notaData] = [0.4, "um dia de diferenca"];
-    else if (d <= 3) [porData, notaData] = [0.2, `${d} dias de diferenca`];
+  if (diaPost) {
+    for (const dia of [c.publishedAt, c.plannedAt].map(diaDe)) {
+      if (!dia) continue;
+      const r = pontuarData(distanciaEmDias(dia, diaPost));
+      if (r.score > porData) [porData, notaData] = [r.score, r.nota];
+    }
   }
 
   const porTexto = semelhanca(palavras(`${c.title} ${c.hook ?? ""}`), palavras(p.caption));
