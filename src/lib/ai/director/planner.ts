@@ -104,7 +104,11 @@ const PLAN_SCHEMA: Record<string, unknown> = {
             type: "string",
             description: "Nome exato de um dos pilares listados no contexto, ou string vazia.",
           },
-          hook: { type: "string", description: "A primeira frase do conteudo." },
+          hook: {
+            type: "string",
+            description:
+              "A primeira frase, no maximo 15 palavras. Coloca quem nao conhece a marca dentro da cena, com algo em jogo. Nunca comeca por saudacao, pelo nome da empresa, por 'Voce sabia' ou por lista de servicos.",
+          },
           why: {
             type: "string",
             description: "Uma frase ligando este item ao diagnostico, a uma metrica ou a um Momento real.",
@@ -253,7 +257,8 @@ Entao proponha os conteudos. Regras:
 - Use os melhores horarios informados para escolher a hora. Se nao houver dado para o dia, escolha o horario mais proximo entre os que existem.
 - Distribua ao longo do mes; nao empilhe tudo na primeira semana.
 - Respeite as datas comemorativas relevantes, considerando o lead_days de cada uma.
-- Nao repita conteudo que ja esta planejado no mes (lista "Ja planejado").
+- **Nao reproponha o que ja existe.** Antes de escrever cada item, confira a lista "JA EXISTE" e a lista "Ja planejado". Se o conteudo que voce ia propor conta a mesma historia que um de la, ele esta descartado — mesmo com outro titulo, outro formato ou outro recorte. Nao basta trocar as palavras: o teste e se ela gravaria as duas coisas separadamente ou se perceberia que sao a mesma.
+- Aquela lista inclui o que ja esta em producao, nao so o que foi publicado. Um card parado em "roteiro" desde agosto continua sendo um conteudo que existe; propor o mesmo assunto de novo faz ela gravar duas vezes ou jogar um fora.
 - Em pillar, use exatamente um dos nomes de pilar listados. Se nenhum servir, deixe vazio.
 - Cada item precisa de um why que amarre a um numero, a um Momento ou ao diagnostico. "Boa ideia" nao e justificativa.
 
@@ -337,10 +342,13 @@ export function renderPlanningContext(ctx: PlanningContext): string {
     naoUsados.map((m, i) => `[${i}] ${m.created_at.slice(0, 10)} — ${m.body}`).join("\n"),
   );
 
+  // A lista inteira, e nao as 25 primeiras: este e o material que impede
+  // repetir, e cortar pela metade era metade da protecao. Vem com o rotulo
+  // dizendo o que fazer com ela — antes chamava-se "Conteudos recentes", um
+  // nome que o modelo so podia ler como inspiracao.
   add(
-    "Conteudos recentes",
+    "JA EXISTE — nao proponha nada equivalente a isto",
     ctx.contentHistory
-      .slice(0, 25)
       .map((c) => `- ${c.title} (${c.status}${c.format ? `, ${c.format}` : ""})`)
       .join("\n"),
   );

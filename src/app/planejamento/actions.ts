@@ -6,6 +6,7 @@ import { AiNotConfiguredError } from "@/lib/ai";
 import { generateMonthlyPlan } from "@/lib/ai/director/planner";
 import { chatAboutPlan } from "@/lib/ai/director/plan-chat";
 import { buildPlanningContext } from "@/lib/planning/context";
+import { separarRepetidos } from "@/lib/planning/dedupe";
 import {
   approveMonthlyPlan,
   carryOverContents,
@@ -17,7 +18,7 @@ import {
 type Turn = { role: "user" | "assistant"; content: string };
 
 export type PlanActionResult =
-  | { ok: true; created?: number }
+  | { ok: true; created?: number; aviso?: string }
   | { ok: false; error: string; notConfigured?: boolean };
 
 export async function generatePlanAction(
@@ -50,7 +51,28 @@ export async function generatePlanAction(
           }
         : undefined,
     );
-    await saveMonthlyPlan(db, period, plan, momentIds);
+
+    // Rede contra repeticao. O prompt ja manda conferir o que existe, e isso
+    // resolve a maioria dos casos — mas regra de prompt e pedido, e uma vez que
+    // o modelo escorrega o card duplicado so sai do Pipeline na mao. Ja saiu:
+    // tres titulos identicos conviveram la.
+    const existentes = ctx.contentHistory.map((c) => c.title);
+    const { novos, repetidos } = separarRepetidos(plan.items, (i) => i.title, existentes);
+
+    await saveMonthlyPlan(db, period, { ...plan, items: novos }, momentIds);
+
+    if (repetidos.length > 0) {
+      revalidatePath("/planejamento");
+      return {
+        ok: true,
+        // Dito, nao escondido: ela precisa saber que o plano veio menor, e por
+        // que. Um plano que encolhe em silencio parece um plano com falha.
+        aviso:
+          repetidos.length === 1
+            ? `Descartei 1 proposta que repetia "${repetidos[0].jaExiste}", que ja esta no Pipeline.`
+            : `Descartei ${repetidos.length} propostas que repetiam conteudos que ja estao no Pipeline.`,
+      };
+    }
   } catch (err) {
     if (err instanceof AiNotConfiguredError) {
       return { ok: false, error: err.message, notConfigured: true };

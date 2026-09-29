@@ -35,6 +35,7 @@ export function PlanPanel({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [gerando, setGerando] = useState(false);
   const [conversando, setConversando] = useState(false);
   const [criados, setCriados] = useState<number | null>(null);
@@ -48,18 +49,23 @@ export function PlanPanel({
 
   function gerar(conversa?: Turn[]) {
     setErro(null);
+    setAviso(null);
     setGerando(true);
     setConversando(false);
     startTransition(async () => {
       const r = await generatePlanAction(period, conversa);
       setGerando(false);
       if (!r.ok) return setErro(r.error);
+      // Plano que encolheu porque houve proposta repetida. Dito em voz alta:
+      // um plano menor sem explicacao parece um plano com falha.
+      if (r.aviso) setAviso(r.aviso);
       router.refresh();
     });
   }
 
   function aprovar() {
     setErro(null);
+    setAviso(null);
     startTransition(async () => {
       const r = await approvePlanAction(period);
       if (!r.ok) return setErro(r.error);
@@ -230,6 +236,12 @@ export function PlanPanel({
       {erro && (
         <p className="rounded-control border border-destructive/30 bg-destructive/5 px-3 py-2 text-[13px] leading-relaxed text-destructive">
           {erro}
+        </p>
+      )}
+
+      {aviso && (
+        <p className="rounded-control border border-rose/30 bg-rose-tint/40 px-3 py-2 text-[13px] leading-relaxed text-rose-ink">
+          {aviso}
         </p>
       )}
 

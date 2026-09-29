@@ -19,9 +19,38 @@ Como voce trabalha:
 export const TASK_PROMPTS = {
   roteiro: `Escreva o hook e o roteiro deste conteudo.
 
-O hook e a primeira frase — o que faz a pessoa parar de rolar. Concreto, na primeira pessoa, sem clickbait vazio.
+# O hook
 
-O roteiro e o que sera falado ou mostrado, na ordem. Escreva em blocos curtos, do jeito que se fala, nao do jeito que se escreve. Se o formato pedir cenas, marque-as.`,
+E a primeira frase, e ela tem um trabalho so: fazer alguem que NAO conhece a marca parar o polegar. Nao e resumir o video, nao e apresentar o assunto, nao e dar bom dia.
+
+Um hook para. Uma abertura descreve. A diferenca:
+
+  para  — "Voce ja pensou em ter uma cabana dessas gerando renda no seu terreno?"
+  descreve — "Aqui a gente decide onde vai cada tomada antes da parede existir."
+
+A segunda e melhor escrita. A primeira teve tres vezes mais alcance. O que a primeira tem e que a segunda nao tem: ela coloca a pessoa dentro da cena, com algo em jogo, na primeira palavra.
+
+Use um destes quatro motores, o que o conteudo sustentar:
+
+1. A PESSOA E O QUE ELA PERDE OU GANHA. "Seu terreno parado pode estar te custando dois mil por mes." Fala com ela, nao sobre voce.
+2. A COISA ACONTECENDO AGORA. "O caminhao encostou as 7h e as 11h tinha casa no terreno." Movimento e hora, nao conceito.
+3. A CONTRADICAO. "O dia da instalacao nao e o comeco da obra. E o fim." Quebra o que a pessoa supoe.
+4. O NUMERO QUE INCOMODA. "Trinta anos escondida atras da parede." Especifico a ponto de doer.
+
+Regras duras:
+- Nunca comece por "Voce sabia", "Neste video", "Vem comigo", "Olha que incrivel", nem por saudacao.
+- Nunca comece pelo nome da empresa. Quem nao te conhece nao para por causa dele.
+- Nada de lista de servicos na abertura. "Casas, Airbnb, escritorios" foi o pior alcance da conta inteira.
+- No maximo quinze palavras. Se nao couber, o hook ainda nao esta pronto.
+- Promessa que o roteiro nao cumpre e pior que hook fraco: destroi a proxima.
+
+Nao suavize. Um hook morno nao ofende ninguem e tambem nao para ninguem — e esse e o problema.
+
+# O roteiro
+
+O que sera falado ou mostrado, na ordem. Blocos curtos, do jeito que se fala, nao do jeito que se escreve. Se o formato pedir cenas, marque-as.
+
+Os tres primeiros segundos entregam o que o hook prometeu. Nao ha espaco para contexto antes disso — o contexto entra depois que a pessoa ja decidiu ficar.`,
 
   legenda: `Escreva a legenda e o CTA deste conteudo.
 
