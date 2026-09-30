@@ -46,6 +46,10 @@ export function PlanPanel({
   const diaDeHoje =
     hoje.getFullYear() === period.year && hoje.getMonth() === period.month ? hoje.getDate() : 0;
   const vencidos = plan?.items.filter((i) => i.day < diaDeHoje).length ?? 0;
+  // Quantos dias deste mes ainda existem. Zero quando ela esta olhando outro
+  // mes, porque ai a contagem nao quer dizer nada.
+  const restamDias =
+    diaDeHoje > 0 ? new Date(period.year, period.month + 1, 0).getDate() - diaDeHoje + 1 : 0;
 
   function gerar(conversa?: Turn[]) {
     setErro(null);
@@ -98,6 +102,14 @@ export function PlanPanel({
         {erro && (
           <p className="mb-3 rounded-control border border-destructive/30 bg-destructive/5 px-3 py-2 text-[12px] leading-relaxed text-destructive">
             {erro}
+          </p>
+        )}
+        {/* O Diretor nunca propoe para dia que ja passou. Dito antes do clique,
+            um plano de dois itens no fim do mes deixa de parecer defeito. */}
+        {diaDeHoje > 0 && restamDias <= 5 && (
+          <p className="mb-3 text-[12.5px] leading-relaxed text-muted">
+            Restam <strong className="text-ink">{restamDias === 1 ? "hoje" : `${restamDias} dias`}</strong>{" "}
+            neste mes, e o cronograma so cobre dia que ainda nao passou.
           </p>
         )}
         <button

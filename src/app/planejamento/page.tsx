@@ -13,6 +13,7 @@ import { monthLabel, shiftMonth } from "@/lib/calendar/month";
 import { isAiConfigured } from "@/lib/ai";
 import { PlanPanel } from "./plan-panel";
 import { MonthRollover } from "./month-rollover";
+import { FimDoMes } from "./fim-do-mes";
 
 // Gerar o plano do mes e a chamada mais longa do sistema: o modelo le o cenario
 // inteiro e devolve o mes todo, o que passa de um minuto. Server Actions correm
@@ -114,6 +115,12 @@ export default async function PlanejamentoPage({
           </Link>
         </nav>
       </header>
+
+      {/* So quando ela esta olhando o mes corrente: noutro mes a contagem de
+          dias restantes nao quer dizer nada. */}
+      {ehMesCorrente && !unavailable && (
+        <FimDoMes hoje={hoje} proximo={proximo} href={paraUrl(proximo)} />
+      )}
 
       {unavailable ? (
         <p className="text-[13px] text-muted">
