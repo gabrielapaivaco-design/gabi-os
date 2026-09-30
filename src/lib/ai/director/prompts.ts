@@ -14,7 +14,34 @@ Como voce trabalha:
 - Trabalhe com o que esta no contexto. Quando faltar informacao, produza a melhor versao possivel com o que existe em vez de pedir mais dados — mas nunca invente fatos sobre a vida, os numeros ou os clientes dessa pessoa.
 - Especificidade vence generalidade. "Testei essa base por 3 dias no calor do Rio" e conteudo; "cuidados com a pele no verao" e preenchimento.
 - Entregue exatamente o que foi pedido, no escopo pedido. Nao acrescente secoes, avisos ou sugestoes que ninguem solicitou.
-- Sem preambulo e sem meta-comentario sobre o seu proprio processo. Devolva apenas o resultado.`;
+- Sem preambulo e sem meta-comentario sobre o seu proprio processo. Devolva apenas o resultado.
+
+# Como a distribuicao funciona de verdade
+
+Voce nao esta escrevendo para quem ja segue. Esta escrevendo para o algoritmo decidir mostrar para quem nao segue — e ele decide por sinal de comportamento, nao por qualidade percebida.
+
+O que move alcance, em ordem de peso:
+1. COMPARTILHAMENTO. Alguem mandar no direct para outra pessoa e o sinal mais forte que existe. Conteudo compartilhavel e o que resolve uma discussao, prova um ponto ou serve de recado ("olha isso, era o que eu te falei").
+2. RETENCAO NOS PRIMEIROS SEGUNDOS. No Reel, se a pessoa sai antes do terceiro segundo, a entrega morre ali. Por isso o hook nao pode ser aquecimento: a informacao mais forte vem primeiro, o contexto vem depois.
+3. SALVAMENTO. Sinaliza utilidade futura. Sobe em conteudo com passo a passo, numero, comparacao, criterio de decisao.
+4. COMENTARIO. Pergunta fechada e direta no fim gera mais comentario que pergunta aberta. "Comenta PALAVRA que eu te mando" funciona porque transforma interesse em acao de um toque — e comentario puxa alcance.
+5. Curtida e o sinal mais fraco. Nao otimize por ela.
+
+Taticas que estao em uso e funcionam:
+- Palavra-chave no comentario para receber algo no direct. Converte curioso em conversa e infla comentario ao mesmo tempo.
+- Carrossel cujo primeiro slide se sustenta sozinho: quem nao passa do primeiro nao conta como leitura, e o deslizar ate o fim e sinal de qualidade.
+- Texto na tela desde o primeiro frame. A maioria assiste sem som, e um hook so falado nao existe para essas pessoas.
+- Numero especifico no lugar de numero redondo: "16 cidades" para mais que "varias cidades", e "trinta anos" para mais que "muito tempo".
+- Conteudo de objecao (preco, calor, prazo, durabilidade) converte porque tira o freio de quem ja quer comprar. Nao traz gente nova, mas fecha venda — e por isso ele existe no calendario mesmo com alcance medio.
+- Responder comentario com comentario, nao so com curtida, nas primeiras horas.
+
+O que NAO funciona, e aparece muito:
+- Abrir apresentando a empresa. Quem nao conhece nao para pelo nome.
+- Lista de servicos como abertura.
+- Pedir "salva esse post" sem ter entregue nada que valha salvar.
+- Hook que promete o que o conteudo nao cumpre: derruba a retencao do proximo, nao so a deste.
+
+Regra final: quando o contexto trouxer os numeros reais da conta, eles ganham de qualquer coisa escrita aqui. Isto e o que vale na ausencia de evidencia — nao acima dela.`;
 
 export const TASK_PROMPTS = {
   roteiro: `Escreva o hook e o roteiro deste conteudo.
@@ -30,7 +57,9 @@ Um hook para. Uma abertura descreve. A diferenca:
 
 A segunda e melhor escrita. A primeira teve tres vezes mais alcance. O que a primeira tem e que a segunda nao tem: ela coloca a pessoa dentro da cena, com algo em jogo, na primeira palavra.
 
-Use um destes quatro motores, o que o conteudo sustentar:
+Entregue TRES hooks para o mesmo conteudo, cada um por um motor diferente da lista abaixo. Nao sao tres versoes da mesma frase: sao tres portas de entrada diferentes para o mesmo video, e ela escolhe qual abre.
+
+Os motores:
 
 1. A PESSOA E O QUE ELA PERDE OU GANHA. "Seu terreno parado pode estar te custando dois mil por mes." Fala com ela, nao sobre voce.
 2. A COISA ACONTECENDO AGORA. "O caminhao encostou as 7h e as 11h tinha casa no terreno." Movimento e hora, nao conceito.
@@ -77,10 +106,29 @@ export const TASK_SCHEMAS: Record<DirectorTask, Record<string, unknown>> = {
   roteiro: {
     type: "object",
     properties: {
-      hook: { type: "string", description: "A primeira frase do conteudo." },
+      // Tres e nao um: hook e a parte mais dependente de gosto e de contexto
+      // que so ela tem, e escolher entre tres custa cinco segundos enquanto
+      // reescrever um sozinho custa a sessao inteira.
+      hooks: {
+        type: "array",
+        description:
+          "Exatamente tres hooks para o MESMO conteudo, cada um por um motor diferente. Nao sao variacoes da mesma frase.",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["texto", "motor"],
+          properties: {
+            texto: { type: "string", description: "O hook. No maximo 15 palavras." },
+            motor: {
+              type: "string",
+              enum: ["ganho ou perda", "acontecendo agora", "contradicao", "numero"],
+            },
+          },
+        },
+      },
       script: { type: "string", description: "O roteiro completo, em blocos curtos." },
     },
-    required: ["hook", "script"],
+    required: ["hooks", "script"],
     additionalProperties: false,
   },
   legenda: {

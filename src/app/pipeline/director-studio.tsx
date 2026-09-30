@@ -18,7 +18,7 @@ export interface ContentAnalysis {
 }
 
 export type DirectorResult =
-  | { task: "roteiro"; hook: string; script: string }
+  | { task: "roteiro"; hooks: { texto: string; motor: string }[]; script: string }
   | { task: "legenda"; caption: string; cta: string }
   | { task: "ideias"; ideas: IdeaSuggestion[] }
   | { task: "analise"; analysis: ContentAnalysis };
@@ -81,12 +81,45 @@ function Loading({ task }: { task: DirectorTask }) {
   );
 }
 
-function Result({ result }: { result: DirectorResult }) {
+function Result({
+  result,
+  hookEscolhido,
+  onEscolherHook,
+}: {
+  result: DirectorResult;
+  hookEscolhido?: number | null;
+  onEscolherHook?: (i: number) => void;
+}) {
   if (result.task === "roteiro") {
     return (
       <div className="flex flex-col gap-8">
-        <Block label="Hook">
-          <p className={`${PROSE} font-medium`}>{result.hook}</p>
+        <Block label={result.hooks.length > 1 ? "Escolha o hook" : "Hook"}>
+          <div className="flex flex-col gap-2">
+            {result.hooks.map((h, i) => {
+              const escolhido = i === (hookEscolhido ?? 0);
+              return (
+                // Tres portas de entrada para o mesmo video, nao tres versoes
+                // da mesma frase. O motor aparece ao lado porque nomear o que
+                // cada um faz e o que permite ela escolher por criterio em vez
+                // de por gosto.
+                <button
+                  key={i}
+                  onClick={() => onEscolherHook?.(i)}
+                  className={`rounded-card border p-4 text-left transition-colors ${
+                    escolhido ? "border-rose bg-rose-tint/40" : "border-line hover:border-faint"
+                  }`}
+                >
+                  <span className="block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-faint">
+                    {h.motor}
+                    <span className="ml-2 normal-case tracking-normal">
+                      {h.texto.trim().split(/\s+/).length} palavras
+                    </span>
+                  </span>
+                  <span className={`mt-1.5 block ${PROSE} font-medium`}>{h.texto}</span>
+                </button>
+              );
+            })}
+          </div>
         </Block>
         <Block label="Roteiro">
           <p className={PROSE}>{result.script}</p>
@@ -213,6 +246,8 @@ export function DirectorStudio({
   onApply,
   onRetry,
   onClose,
+  hookEscolhido,
+  onEscolherHook,
 }: {
   task: DirectorTask;
   result: DirectorResult | null;
@@ -221,6 +256,8 @@ export function DirectorStudio({
   onApply: () => void;
   onRetry: () => void;
   onClose: () => void;
+  hookEscolhido?: number | null;
+  onEscolherHook?: (i: number) => void;
 }) {
   // Roteiro e legenda preenchem campos do card; angulos e analise sao leitura.
   const canApply = result?.task === "roteiro" || result?.task === "legenda";
@@ -274,7 +311,9 @@ export function DirectorStudio({
           </div>
         )}
 
-        {!loading && !error && result && <Result result={result} />}
+        {!loading && !error && result && (
+          <Result result={result} hookEscolhido={hookEscolhido} onEscolherHook={onEscolherHook} />
+        )}
       </div>
     </StudioShell>
   );

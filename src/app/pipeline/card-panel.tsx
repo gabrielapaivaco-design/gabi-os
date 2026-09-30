@@ -136,6 +136,10 @@ export function CardPanel({
   const [studioTask, setStudioTask] = useState<DirectorTask | null>(null);
   const [studioResult, setStudioResult] = useState<DirectorResult | null>(null);
   const [generating, setGenerating] = useState(false);
+  // Qual dos tres hooks ela marcou. O primeiro vem marcado: o Diretor ordena
+  // pelo que ele considera mais forte, e nao marcar nenhum faria o botao
+  // Aplicar nao ter o que aplicar.
+  const [hookEscolhido, setHookEscolhido] = useState(0);
   const [aiError, setAiError] = useState<string | null>(null);
   // Sinaliza que ha texto gerado ainda nao gravado: a IA preenche os campos,
   // mas quem decide o que vai para o banco continua sendo a usuaria.
@@ -181,7 +185,8 @@ export function CardPanel({
 
       const output = result.output;
       if (output.task === "roteiro") {
-        setStudioResult({ task: "roteiro", hook: output.data.hook, script: output.data.script });
+        setHookEscolhido(0);
+        setStudioResult({ task: "roteiro", hooks: output.data.hooks, script: output.data.script });
       } else if (output.task === "legenda") {
         setStudioResult({ task: "legenda", caption: output.data.caption, cta: output.data.cta });
       } else if (output.task === "ideias") {
@@ -196,7 +201,7 @@ export function CardPanel({
   // nada nos campos. O resultado fica guardado para poder ser reaberto.
   function applyStudioResult() {
     if (studioResult?.task === "roteiro") {
-      setHook(studioResult.hook);
+      setHook(studioResult.hooks[hookEscolhido]?.texto ?? studioResult.hooks[0]?.texto ?? "");
       setScript(studioResult.script);
       setAiDraft(true);
     } else if (studioResult?.task === "legenda") {
@@ -628,6 +633,8 @@ export function CardPanel({
           loading={generating}
           error={aiError}
           onApply={applyStudioResult}
+          hookEscolhido={hookEscolhido}
+          onEscolherHook={setHookEscolhido}
           onRetry={() => runTask(studioTask)}
           onClose={() => setStudioTask(null)}
         />

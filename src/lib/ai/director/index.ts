@@ -12,8 +12,13 @@ export type { DirectorTask } from "./prompts";
 // com a interface AiProvider, entao trocar de provedor nao encosta neste
 // arquivo.
 
+export interface HookOption {
+  texto: string;
+  motor: string;
+}
+
 export interface ScriptDraft {
-  hook: string;
+  hooks: HookOption[];
   script: string;
 }
 export interface CaptionDraft {
@@ -113,9 +118,20 @@ function parseOutput(task: DirectorTask, parsed: unknown): DirectorOutput["data"
   const value = parsed as Record<string, unknown>;
 
   switch (task) {
-    case "roteiro":
-      requireStrings(value, ["hook", "script"]);
-      return { hook: String(value.hook), script: String(value.script) };
+    case "roteiro": {
+      requireStrings(value, ["script"]);
+      const brutos = Array.isArray(value.hooks) ? (value.hooks as Record<string, unknown>[]) : [];
+      const hooks = brutos
+        .map((h) => ({ texto: String(h?.texto ?? "").trim(), motor: String(h?.motor ?? "").trim() }))
+        .filter((h) => h.texto);
+
+      // Um hook ainda e uma entrega; nenhum nao e. O roteiro sozinho deixaria a
+      // tela sem nada para aplicar no campo de hook.
+      if (hooks.length === 0) {
+        throw new AiProviderError("A IA nao devolveu nenhum hook.");
+      }
+      return { hooks, script: String(value.script) };
+    }
     case "legenda":
       requireStrings(value, ["caption", "cta"]);
       return { caption: String(value.caption), cta: String(value.cta) };
