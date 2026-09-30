@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { hojeNoFuso } from "@/lib/utils/hoje";
 import { getAiProvider, AiProviderError } from "@/lib/ai";
 import { emit } from "@/lib/events/bus";
 import { getWorkspaceId } from "@/lib/workspace/current";
@@ -221,7 +222,7 @@ export function buildPlanPrompt(ctx: PlanningContext): string {
 
   // Sem a data de hoje o modelo planeja o mes inteiro a partir do dia 1 — e no
   // dia 10 metade do cronograma ja nasce no passado.
-  const hoje = new Date();
+  const hoje = hojeNoFuso();
   const mesCorrente =
     hoje.getFullYear() === ctx.period.year && hoje.getMonth() === ctx.period.month;
   const primeiroDia = mesCorrente ? hoje.getDate() : 1;

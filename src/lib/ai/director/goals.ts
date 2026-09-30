@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { hojeNoFuso } from "@/lib/utils/hoje";
 import { getAiProvider, AiProviderError } from "@/lib/ai";
 import { getWorkspaceId } from "@/lib/workspace/current";
 import { buildPlanningContext } from "@/lib/planning/context";
@@ -70,7 +71,7 @@ export async function suggestQuarterGoals(
   existingTitles: string[] = [],
 ): Promise<GoalSuggestions> {
   const provider = getAiProvider();
-  const hoje = new Date();
+  const hoje = hojeNoFuso();
   const context = await buildPlanningContext(db, {
     year: hoje.getFullYear(),
     month: hoje.getMonth(),

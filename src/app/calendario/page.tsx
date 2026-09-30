@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hojeNoFuso } from "@/lib/utils/hoje";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace/current";
 import { dayKeyFromIso } from "@/lib/calendar/month";
@@ -53,7 +54,7 @@ async function loadCalendar(): Promise<CalendarData> {
 
 export default async function CalendarioPage() {
   const { contents, commemorativeDates, unavailable } = await loadCalendar();
-  const now = new Date();
+  const now = hojeNoFuso();
 
   return (
     <div>

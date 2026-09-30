@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { hojeNoFuso } from "@/lib/utils/hoje";
 import { createClient } from "@/lib/supabase/server";
 import { createGoal, deleteGoal, updateGoal, updateGoalProgress } from "@/lib/goals/service";
 import { AiNotConfiguredError } from "@/lib/ai";
@@ -37,7 +38,7 @@ export async function acceptGoalsAction(
   if (goals.length === 0) return { ok: false, error: "Nenhuma meta selecionada." };
 
   const db = createClient();
-  const quarter = quarterOf(new Date());
+  const quarter = quarterOf(hojeNoFuso());
 
   try {
     for (const g of goals) {

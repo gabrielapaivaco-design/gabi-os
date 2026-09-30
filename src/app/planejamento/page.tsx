@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hojeNoFuso } from "@/lib/utils/hoje";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { buildPlanningContext, summarizeContext } from "@/lib/planning/context";
@@ -28,7 +29,7 @@ export const maxDuration = 300;
 // Sem isso a tela ficaria presa em "hoje": nao daria para olhar o que foi
 // planejado no mes passado nem adiantar o proximo.
 function lerPeriodo(mes: string | undefined): { year: number; month: number } {
-  const hoje = new Date();
+  const hoje = hojeNoFuso();
   const m = /^(\d{4})-(\d{2})$/.exec(mes ?? "");
   if (!m) return { year: hoje.getFullYear(), month: hoje.getMonth() };
 
@@ -53,7 +54,7 @@ export default async function PlanejamentoPage({
   const anterior = shiftMonth(period.year, period.month, -1);
   const proximo = shiftMonth(period.year, period.month, 1);
 
-  const hoje = new Date();
+  const hoje = hojeNoFuso();
   const ehMesCorrente = hoje.getFullYear() === period.year && hoje.getMonth() === period.month;
 
   let summary: ReturnType<typeof summarizeContext> = [];

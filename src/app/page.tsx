@@ -7,6 +7,7 @@
 // em volta dela.
 
 import Link from "next/link";
+import { hojeNoFuso, horaNoFuso } from "@/lib/utils/hoje";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace/current";
 import {
@@ -31,7 +32,7 @@ import { Tile, TileLabel } from "./tile";
 export const maxDuration = 300;
 
 function saudacao() {
-  const h = new Date().getHours();
+  const h = horaNoFuso();
   if (h < 12) return "Bom dia";
   if (h < 18) return "Boa tarde";
   return "Boa noite";
@@ -68,7 +69,7 @@ interface HojeData {
 }
 
 function currentQuarter(): string {
-  const d = new Date();
+  const d = hojeNoFuso();
   return `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
 }
 
@@ -128,7 +129,7 @@ async function loadHoje(): Promise<HojeData> {
     // As duas leituras abaixo ficam fora do Promise.all de proposito: nenhuma
     // delas e obrigatoria para a tela existir, e uma ausencia — mes sem plano,
     // migration de metricas ainda nao rodada — nao pode derrubar o resto.
-    const agora = new Date();
+    const agora = hojeNoFuso();
     let storyDeHoje: StoriesDay | null = null;
     try {
       const plano = await loadMonthlyPlan(db, {
@@ -272,7 +273,7 @@ export default async function HojePage() {
     erro,
   } = await loadHoje();
 
-  const agora = new Date();
+  const agora = hojeNoFuso();
   const hoje = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
     day: "numeric",
