@@ -235,17 +235,51 @@ Nao proponha nada antes do dia ${primeiroDia} — esses dias ja passaram e um co
 Distribua os conteudos entre o dia ${primeiroDia} e o dia ${dias}.`
     : `Planeje o mes inteiro, do dia 1 ao dia ${dias}.`;
 
+  // A faixa de volume sai da regra de ritmo, e nao de um palpite.
+  //
+  // Antes o prompt pedia "prefira poucos conteudos que saem a muitos que ficam
+  // no papel" e, na mesma lista, "no maximo tres dias seguidos sem nada". As
+  // duas coisas nao cabem juntas: em 31 dias, tres dias de intervalo exigem uns
+  // onze itens. O modelo recebia ordens contraditorias e resolvia pelo lado
+  // conservador — saiu um plano de oito, com buraco de quatro dias.
+  //
+  // Um a cada tres dias e o piso que a regra exige; um a cada dois, o teto
+  // antes de virar mais conteudo do que uma pessoa so consegue gravar.
+  const minimo = Math.ceil(restantes / 3);
+  const maximo = Math.ceil(restantes / 2);
+
   // A grade de semanas, explicita. Sem ela o modelo distribuia no olho e saia
   // 2, 3, 4, 2, 1 — uma semana com o dobro da densidade da outra. Com a grade
   // na frente ele tem contra o que conferir antes de fechar.
-  const grade = semanasDoMes(ctx.period.year, ctx.period.month)
-    .map((s) => {
-      const de = Math.max(s.primeiroDia, primeiroDia);
-      if (de > s.ultimoDia) return null;
-      const quantos = s.ultimoDia - de + 1;
-      return `- semana ${s.numero}: dia ${de} ao ${s.ultimoDia} (${quantos} ${quantos === 1 ? "dia" : "dias"})`;
+  // Com a COTA de cada semana ja calculada, e nao so os dias.
+  //
+  // Pedir ao modelo que conferisse a distribuicao nao bastou: ele devolveu
+  // 2, 3, 2, 4, 2 com um buraco de quatro dias, tendo a regra na frente. O
+  // calculo e deterministico, entao nao ha razao para delegar: a cota sai
+  // daqui pronta, proporcional aos dias de cada semana.
+  const janelas = semanasDoMes(ctx.period.year, ctx.period.month)
+    .map((s) => ({ ...s, primeiroDia: Math.max(s.primeiroDia, primeiroDia) }))
+    .map((s) => ({ ...s, dias: s.ultimoDia - s.primeiroDia + 1 }))
+    .filter((s) => s.dias > 0);
+
+  const alvo = Math.round((minimo + maximo) / 2);
+  const porDia = alvo / restantes;
+
+  // Maior resto: distribui proporcionalmente e devolve as sobras as semanas que
+  // ficaram mais perto de ganhar mais uma, para o total bater com o alvo.
+  const brutos = janelas.map((s) => s.dias * porDia);
+  const cotas = brutos.map((b) => Math.floor(b));
+  let sobra = alvo - cotas.reduce((a, b) => a + b, 0);
+  const ordem = brutos
+    .map((b, i) => ({ i, resto: b - Math.floor(b) }))
+    .sort((a, b) => b.resto - a.resto);
+  for (let k = 0; sobra > 0; k++, sobra--) cotas[ordem[k % ordem.length].i]++;
+
+  const grade = janelas
+    .map((s, i) => {
+      const quantos = s.dias === 1 ? "1 dia" : `${s.dias} dias`;
+      return `- semana ${s.numero}: dia ${s.primeiroDia} ao ${s.ultimoDia} (${quantos}) — ${cotas[i]} ${cotas[i] === 1 ? "conteudo" : "conteudos"}`;
     })
-    .filter(Boolean)
     .join("\n");
 
   return `# Tarefa
@@ -254,7 +288,7 @@ Monte o cronograma de conteudo de ${nome} de ${ctx.period.year} (${dias} dias).
 
 ${janela}
 
-AS SEMANAS DESTE MES:
+AS SEMANAS DESTE MES, E QUANTOS CONTEUDOS CADA UMA RECEBE:
 ${grade}
 
 Comece por um diagnostico honesto do cenario acima — leia as metricas reais, nao suponha. Se o desempenho caiu, diga o que os numeros mostram e o que provavelmente causou. Se algo funcionou muito acima da media, aponte e proponha repetir a mecanica, nao o assunto.
@@ -267,14 +301,13 @@ Entao monte a ROTINA DE STORIES. Ela tem exatamente sete entradas, uma para cada
 - Sabado e domingo pedem menos esforco que dia util. Respeite isso: rotina que nao se cumpre no fim de semana quebra a sequencia inteira.
 
 Entao proponha os conteudos. Regras:
-- Volume realista para o tempo que resta, nao para um mes cheio. Prefira poucos conteudos que saem a muitos que ficam no papel.
+- **Quantos: de ${minimo} a ${maximo} conteudos.** Este numero nao e gosto meu: ele sai da propria regra de ritmo logo abaixo. Com ${restantes} dias e no maximo tres dias seguidos sem publicar, menos de ${minimo} nao fecha a conta. Fique dentro da faixa; se faltar assunto para chegar em ${minimo}, e sinal de que voce esta recusando angulos novos sobre temas que ja existem — o que a regra de repeticao proibe e o mesmo CONTEUDO, nao o mesmo assunto.
 - **Varie o formato.** Alterne entre Reel, Carrossel e Foto unica, e nenhum deles pode passar de dois tercos do total. Mesmo quando um formato tem o melhor alcance, um mes inteiro dele e um mes pobre: Reel puxa alcance novo, Carrossel entrega profundidade e rende salvamento, Foto unica ancora identidade. Alcance nao e a unica funcao do conteudo.
 - **Stories ficam na rotina, nao nesta lista.** So use formato "Stories" aqui quando for um Stories especifico e datado — cobertura de um lancamento, caixinha depois de um Reel que rendeu, bastidor de uma entrega marcada. O dia a dia ja esta coberto pela rotina.
 - No campo why, so cite dia da semana se ele corresponder a data que voce escolheu. Conferir isso e sua responsabilidade.
 - Aproveite primeiro os Momentos que ainda nao viraram conteudo — eles ja aconteceram na vida dela e por isso rendem material especifico. Use o indice da lista em momentIndex.
 - Use os melhores horarios informados para escolher a hora. Se nao houver dado para o dia, escolha o horario mais proximo entre os que existem.
-- **Ritmo constante.** As semanas do mes estao listadas acima com os dias que cada uma tem. Distribua os conteudos de forma que toda semana receba a mesma quantidade POR DIA disponivel — a ultima semana costuma ser parcial e recebe menos itens por ser mais curta, nao por ser o fim do mes.
-- Antes de fechar, conte quantos itens caem em cada semana e confira: nenhuma pode ficar com menos da metade da mais cheia. Se ficou, mova — nao acrescente.
+- **A cota de cada semana esta na lista acima e nao e sugestao.** Entregue exatamente aquele numero de conteudos por semana. Ja calculei a proporcao pelos dias de cada uma; sua parte e escolher QUAIS conteudos e em que dia dentro da semana, nao quantos.
 - Nao deixe mais de tres dias seguidos sem nada. Buraco de uma semana quebra a frequencia, e frequencia e o que sustenta alcance.
 - Mova o que nao tem data propria. Conteudo preso a uma data — comemorativa, entrega marcada, lancamento — fica onde esta; o resto existe para preencher o ritmo.
 - Respeite as datas comemorativas relevantes, considerando o lead_days de cada uma.
