@@ -7,6 +7,7 @@ import { Check, MessageCircle, Sparkles } from "lucide-react";
 import type { StoredPlan } from "@/lib/planning/service";
 import { DirectorChat, type Turn } from "@/app/pipeline/director-chat";
 import { approvePlanAction, chatAboutPlanAction, generatePlanAction } from "./actions";
+import { avisoDeRitmo, medirRitmo } from "@/lib/planning/ritmo";
 
 const DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
 
@@ -48,6 +49,11 @@ export function PlanPanel({
   const vencidos = plan?.items.filter((i) => i.day < diaDeHoje).length ?? 0;
   // Quantos dias deste mes ainda existem. Zero quando ela esta olhando outro
   // mes, porque ai a contagem nao quer dizer nada.
+  // Medido do plano que esta na tela, e nao do que foi gerado: se ela mexeu
+  // nas datas na conversa, o aviso acompanha.
+  const ritmo = plan
+    ? avisoDeRitmo(medirRitmo(plan.items.map((i) => i.day), period.year, period.month, Math.max(diaDeHoje, 1)))
+    : null;
   const restamDias =
     diaDeHoje > 0 ? new Date(period.year, period.month + 1, 0).getDate() - diaDeHoje + 1 : 0;
 
@@ -248,6 +254,15 @@ export function PlanPanel({
       {erro && (
         <p className="rounded-control border border-destructive/30 bg-destructive/5 px-3 py-2 text-[13px] leading-relaxed text-destructive">
           {erro}
+        </p>
+      )}
+
+      {/* Ritmo irregular nao impede aprovar — e uma observacao, nao um erro.
+          Mas ela precisa ver antes, porque depois de aprovado o conserto
+          deixou de ser "gerar de novo" e virou arrastar card no Calendario. */}
+      {ritmo && (
+        <p className="rounded-control border border-line bg-canvas px-3 py-2 text-[12.5px] leading-relaxed text-muted">
+          {ritmo}
         </p>
       )}
 

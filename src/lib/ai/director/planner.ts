@@ -5,6 +5,7 @@ import { emit } from "@/lib/events/bus";
 import { getWorkspaceId } from "@/lib/workspace/current";
 import { buildPlanningContext, type PlanningContext } from "@/lib/planning/context";
 import { WEEKDAYS } from "@/lib/planning/weekday";
+import { semanasDoMes } from "@/lib/planning/ritmo";
 import { DIRECTOR_SYSTEM } from "./prompts";
 
 // Planejamento do mes: o Diretor le o cenario inteiro (metricas reais,
@@ -234,11 +235,27 @@ Nao proponha nada antes do dia ${primeiroDia} — esses dias ja passaram e um co
 Distribua os conteudos entre o dia ${primeiroDia} e o dia ${dias}.`
     : `Planeje o mes inteiro, do dia 1 ao dia ${dias}.`;
 
+  // A grade de semanas, explicita. Sem ela o modelo distribuia no olho e saia
+  // 2, 3, 4, 2, 1 — uma semana com o dobro da densidade da outra. Com a grade
+  // na frente ele tem contra o que conferir antes de fechar.
+  const grade = semanasDoMes(ctx.period.year, ctx.period.month)
+    .map((s) => {
+      const de = Math.max(s.primeiroDia, primeiroDia);
+      if (de > s.ultimoDia) return null;
+      const quantos = s.ultimoDia - de + 1;
+      return `- semana ${s.numero}: dia ${de} ao ${s.ultimoDia} (${quantos} ${quantos === 1 ? "dia" : "dias"})`;
+    })
+    .filter(Boolean)
+    .join("\n");
+
   return `# Tarefa
 
 Monte o cronograma de conteudo de ${nome} de ${ctx.period.year} (${dias} dias).
 
 ${janela}
+
+AS SEMANAS DESTE MES:
+${grade}
 
 Comece por um diagnostico honesto do cenario acima — leia as metricas reais, nao suponha. Se o desempenho caiu, diga o que os numeros mostram e o que provavelmente causou. Se algo funcionou muito acima da media, aponte e proponha repetir a mecanica, nao o assunto.
 
@@ -256,7 +273,10 @@ Entao proponha os conteudos. Regras:
 - No campo why, so cite dia da semana se ele corresponder a data que voce escolheu. Conferir isso e sua responsabilidade.
 - Aproveite primeiro os Momentos que ainda nao viraram conteudo — eles ja aconteceram na vida dela e por isso rendem material especifico. Use o indice da lista em momentIndex.
 - Use os melhores horarios informados para escolher a hora. Se nao houver dado para o dia, escolha o horario mais proximo entre os que existem.
-- Distribua ao longo do mes; nao empilhe tudo na primeira semana.
+- **Ritmo constante.** As semanas do mes estao listadas acima com os dias que cada uma tem. Distribua os conteudos de forma que toda semana receba a mesma quantidade POR DIA disponivel — a ultima semana costuma ser parcial e recebe menos itens por ser mais curta, nao por ser o fim do mes.
+- Antes de fechar, conte quantos itens caem em cada semana e confira: nenhuma pode ficar com menos da metade da mais cheia. Se ficou, mova — nao acrescente.
+- Nao deixe mais de tres dias seguidos sem nada. Buraco de uma semana quebra a frequencia, e frequencia e o que sustenta alcance.
+- Mova o que nao tem data propria. Conteudo preso a uma data — comemorativa, entrega marcada, lancamento — fica onde esta; o resto existe para preencher o ritmo.
 - Respeite as datas comemorativas relevantes, considerando o lead_days de cada uma.
 - **Nao reproponha o que ja existe.** Antes de escrever cada item, confira a lista "JA EXISTE" e a lista "Ja planejado". Se o conteudo que voce ia propor conta a mesma historia que um de la, ele esta descartado — mesmo com outro titulo, outro formato ou outro recorte. Nao basta trocar as palavras: o teste e se ela gravaria as duas coisas separadamente ou se perceberia que sao a mesma.
 - Aquela lista inclui o que ja esta em producao, nao so o que foi publicado. Um card parado em "roteiro" desde agosto continua sendo um conteudo que existe; propor o mesmo assunto de novo faz ela gravar duas vezes ou jogar um fora.
