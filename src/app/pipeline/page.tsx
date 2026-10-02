@@ -3,6 +3,7 @@ import { isAiConfigured } from "@/lib/ai";
 import { STATUS_ORDER } from "@/lib/utils/constants";
 import { getWorkspaceId } from "@/lib/workspace/current";
 import { dayKeyFromIso } from "@/lib/calendar/month";
+import { diaNoFuso } from "@/lib/utils/hoje";
 import type { ContentStatus } from "@/types/db";
 import { PipelineBoard, type ContentCardData, type PillarOption } from "./pipeline-board";
 import { ClassifyPillars } from "./classify-pillars";
@@ -65,9 +66,16 @@ async function loadBoard(): Promise<BoardData> {
     if (contentsRes.error) throw contentsRes.error;
     if (pillarsRes.error) throw pillarsRes.error;
 
+    // O Pipeline e a mesa do mes. O que ja saiu em meses anteriores continua
+    // valendo para Metricas, Conciliacao e para o Diretor nao repetir assunto,
+    // por isso nao e arquivado: so deixa de ocupar a coluna "Publicado".
+    // A Biblioteca continua mostrando tudo.
+    const inicioDoMes = diaNoFuso(new Date()).slice(0, 8) + "01";
     const columns = emptyColumns();
     for (const row of (contentsRes.data ?? []) as any[]) {
       const status = row.status as ContentStatus;
+      const quando = row.published_at ?? row.planned_at;
+      if (status === "publicado" && quando && diaNoFuso(quando) < inicioDoMes) continue;
       columns[status].push({
         id: row.id,
         title: row.title,

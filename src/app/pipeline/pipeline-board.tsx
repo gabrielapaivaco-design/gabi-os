@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -88,6 +89,21 @@ export function PipelineBoard({
   useEffect(() => {
     setColumns(initialColumns);
   }, [initialColumns]);
+
+  // Clique no Calendario chega como ?open=id. Se o quadro veio do cache do
+  // navegador, de antes do card existir, o id nao esta em nenhuma coluna e o
+  // painel nao abria — sem erro nenhum. Pede os dados frescos uma vez.
+  const router = useRouter();
+  const jaRecarregou = useRef(false);
+  useEffect(() => {
+    if (!initialOpenCardId) return;
+    setOpenCardId(initialOpenCardId);
+    const existe = STATUS_ORDER.some((s) => initialColumns[s].some((c) => c.id === initialOpenCardId));
+    if (!existe && !jaRecarregou.current) {
+      jaRecarregou.current = true;
+      router.refresh();
+    }
+  }, [initialOpenCardId, initialColumns, router]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
